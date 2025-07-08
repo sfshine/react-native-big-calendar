@@ -16,14 +16,12 @@ module.exports = {
 
   addons: [
     '@storybook/addon-webpack5-compiler-babel',
-    '@storybook/addon-react-native-web',
     {
       name: '@storybook/addon-react-native-web',
       options: {
         modulesToTranspile: ['react-native-reanimated'],
         babelPlugins: [
           '@babel/plugin-proposal-export-namespace-from',
-          'react-native-reanimated/plugin',
         ],
       },
     },
