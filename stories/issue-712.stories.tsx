@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import dayjs from 'dayjs'
 import React, { useCallback, useState } from 'react'
-import { Dimensions, Text, TouchableOpacity } from 'react-native'
+import { Dimensions, Text } from 'react-native'
+import { TouchableOpacity } from 'react-native-gesture-handler'
 
 import { Calendar, type CalendarTouchableOpacityProps, type ICalendarEventBase } from '../src'
 import type { DateRangeHandler } from '../src/interfaces'

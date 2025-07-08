@@ -5,12 +5,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
   useWindowDimensions,
 } from 'react-native'
 import { Calendar, type ICalendarEventBase, type Mode } from 'react-native-big-calendar'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler'
 import { events } from '../events'
 
 export default function Index() {

@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import React from 'react'
-import { type RecursiveArray, Text, TouchableOpacity, View, type ViewStyle } from 'react-native'
+import { type RecursiveArray, Text, View, type ViewStyle } from 'react-native'
+import { TouchableOpacity } from 'react-native-gesture-handler'
 
 import type { EventRenderer, HourRenderer, ICalendarEventBase } from '../src/interfaces'
 import { formatStartEnd } from '../src/utils/datetime'

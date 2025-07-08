@@ -6,11 +6,10 @@ import {
   Animated,
   Platform,
   Text,
-  TouchableHighlight,
-  TouchableOpacity,
   View,
   type ViewStyle,
 } from 'react-native'
+import { TouchableHighlight, TouchableOpacity } from 'react-native-gesture-handler'
 
 import { u } from '../commonStyles'
 import { useNow } from '../hooks/useNow'

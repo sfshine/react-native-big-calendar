@@ -4,10 +4,10 @@ import {
   type AccessibilityProps,
   Platform,
   Text,
-  TouchableOpacity,
   View,
   type ViewStyle,
 } from 'react-native'
+import { TouchableOpacity } from 'react-native-gesture-handler'
 import { eventCellCss, u } from '../commonStyles'
 import type { ICalendarEventBase } from '../interfaces'
 import { useTheme } from '../theme/ThemeContext'
