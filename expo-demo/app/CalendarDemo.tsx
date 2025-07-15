@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 import { Calendar, type ICalendarEventBase, type Mode } from 'react-native-big-calendar'
 import { GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler'
+import { Link } from 'expo-router'
 import { events } from '../events'
 
 export default function CalendarDemo() {
@@ -39,6 +40,16 @@ export default function CalendarDemo() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View>
         <SafeAreaView>
+          {/* Navigation Links */}
+          <View style={styles.navigationContainer}>
+            <Link href="/MonthViewTestPage" style={styles.navButton}>
+              <Text style={styles.navButtonText}>Infinite Pager Test</Text>
+            </Link>
+            <Link href="/MonthViewPagerPage" style={styles.navButton}>
+              <Text style={styles.navButtonText}>Pager View Test</Text>
+            </Link>
+          </View>
+          
           <Text style={styles.headline}>Calendar Mode</Text>
           <ScrollView horizontal={true} style={{ flexGrow: 0 }}>
             <View style={styles.buttonRow}>
@@ -78,7 +89,7 @@ export default function CalendarDemo() {
             </View>
           </ScrollView>
           <Calendar
-            height={height - 60}
+            height={height - 120}
             events={[...events, ...additionalEvents]}
             onLongPressCell={addLongEvent}
             onPressCell={addEvent}
@@ -97,6 +108,25 @@ export default function CalendarDemo() {
 }
 
 const styles = StyleSheet.create({
+  navigationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 10,
+    backgroundColor: '#f8f9fa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#dee2e6',
+  },
+  navButton: {
+    backgroundColor: '#28a745',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  navButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+  },
   buttonContainer: {
     backgroundColor: '#f1f1f1',
     borderRadius: 10,

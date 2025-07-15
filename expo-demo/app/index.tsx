@@ -1,6 +1,6 @@
-import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
-import { Link } from 'expo-router'
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { Link } from "expo-router";
 
 export default function Index() {
   return (
@@ -8,27 +8,36 @@ export default function Index() {
       <Link href="/CalendarDemo" style={styles.button}>
         <Text style={styles.buttonText}>Open Calendar Demo</Text>
       </Link>
-      <Link href="/MonthViewTestPage" style={styles.button}>
-        <Text style={styles.buttonText}>Open Month View Test Page</Text>
+      <Link href="/MonthViewInfinitePagerTest" style={styles.button}>
+        <Text style={styles.buttonText}>
+          Open Month View Test Page (Infinite Pager)
+        </Text>
+      </Link>
+      <Link href="/MonthViewPagerPage" style={styles.button}>
+        <Text style={styles.buttonText}>
+          Open Month View Test Page (Pager View)
+        </Text>
       </Link>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   button: {
-    backgroundColor: '#007bff',
+    backgroundColor: "#007bff",
     padding: 15,
     borderRadius: 10,
+    marginVertical: 10,
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+    textAlign: "center",
   },
-})
+});
