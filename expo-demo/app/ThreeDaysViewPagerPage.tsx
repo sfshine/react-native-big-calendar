@@ -1,8 +1,14 @@
 import React, { useState, useRef } from "react";
 import { StyleSheet, View, Text, useWindowDimensions } from "react-native";
 import dayjs, { Dayjs } from "dayjs";
-import { ICalendarEventBase, Calendar } from "react-native-big-calendar";
+import {
+  defaultTheme,
+  getDatesInNextThreeDays,
+  ICalendarEventBase,
+  ThemeContext,
+} from "react-native-big-calendar";
 import PagerView from "react-native-pager-view";
+import { CalendarBody } from "react-native-big-calendar";
 
 const DUMMY_EVENTS: ICalendarEventBase[] = [
   {
@@ -74,54 +80,77 @@ export default function ThreeDaysViewPagerPage() {
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>
-        {formatDateRange(currentDisplayDate, endDate)}
-      </Text>
-      <Text style={styles.subHeader}>3 Days View</Text>
+  // CalendarBody 的配置参数
+  const cellHeight = 60;
+  const containerHeight = height - 160;
+  const scrollOffsetMinutes = 480; // 8:00 AM
 
-      <PagerView
-        ref={pagerRef}
-        style={styles.pagerView}
-        initialPage={10} // 从中间页面开始
-        onPageSelected={onPageSelected}
-      >
-        {pages.map((page) => (
-          <View key={page.key} style={styles.pageContainer}>
-            <Calendar
-              height={height - 160} // 为header和pager调整高度
-              date={page.date.toDate()}
-              events={DUMMY_EVENTS}
-              mode="3days"
-              swipeEnabled={false} // 禁用内部滑动，使用外部PagerView
-              showTime={true}
-              scrollOffsetMinutes={480} // 8:00 AM开始显示
-              ampm={false}
-              hourRowHeight={60}
-              onPressEvent={(event) => {
-                console.log("Event pressed:", event.title);
-              }}
-              onPressCell={(date) => {
-                console.log("Cell pressed:", date);
-              }}
-              eventCellStyle={{
-                backgroundColor: "#e3f2fd",
-                borderRadius: 8,
-                borderColor: "#1976d2",
-                borderWidth: 1,
-              }}
-              calendarCellStyle={{
-                borderColor: "#e0e0e0",
-              }}
-              headerContainerStyle={{
-                backgroundColor: "#f5f5f5",
-              }}
-            />
-          </View>
-        ))}
-      </PagerView>
-    </View>
+  return (
+    <ThemeContext.Provider value={defaultTheme}>
+      <View style={styles.container}>
+        <Text style={styles.header}>
+          {formatDateRange(currentDisplayDate, endDate)}
+        </Text>
+        <Text style={styles.subHeader}>3 Days View</Text>
+
+        <PagerView
+          ref={pagerRef}
+          style={styles.pagerView}
+          initialPage={10} // 从中间页面开始
+          onPageSelected={onPageSelected}
+        >
+          {pages.map((page) => {
+            const dateRange = getDatesInNextThreeDays(page.date.toDate());
+
+            return (
+              <View key={page.key} style={styles.pageContainer}>
+                <CalendarBody
+                  cellHeight={cellHeight}
+                  containerHeight={containerHeight}
+                  dateRange={dateRange}
+                  events={DUMMY_EVENTS}
+                  scrollOffsetMinutes={scrollOffsetMinutes}
+                  ampm={false}
+                  showTime={true}
+                  style={styles.calendarBody}
+                  eventCellStyle={{
+                    backgroundColor: "#e3f2fd",
+                    borderRadius: 8,
+                    borderColor: "#1976d2",
+                    borderWidth: 1,
+                  }}
+                  calendarCellStyle={{
+                    borderColor: "#e0e0e0",
+                  }}
+                  hideNowIndicator={false}
+                  overlapOffset={20}
+                  onPressEvent={(event) => {
+                    console.log("Event pressed:", event.title);
+                  }}
+                  onPressCell={(date) => {
+                    console.log("Cell pressed:", date);
+                  }}
+                  hourStyle={{
+                    fontSize: 12,
+                    color: "#666",
+                  }}
+                  hideHours={false}
+                  minHour={0}
+                  maxHour={23}
+                  isEventOrderingEnabled={true}
+                  showWeekNumber={false}
+                  showVerticalScrollIndicator={false}
+                  scrollEnabled={true}
+                  enableEnrichedEvents={false}
+                  eventsAreSorted={false}
+                  timeslots={0}
+                />
+              </View>
+            );
+          })}
+        </PagerView>
+      </View>
+    </ThemeContext.Provider>
   );
 }
 
@@ -148,6 +177,9 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   pageContainer: {
+    flex: 1,
+  },
+  calendarBody: {
     flex: 1,
   },
 });
