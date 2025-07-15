@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, useWindowDimensions } from "react-native";
 import dayjs, { Dayjs } from "dayjs";
 import { ICalendarEventBase } from "react-native-big-calendar";
 import { CalendarBodyForMonthView } from "react-native-big-calendar";
-import PagerView from "react-native-pager-view";
+import InfinitePager, { InfinitePagerImperativeApi } from "react-native-infinite-pager";
 
 const DUMMY_EVENTS: ICalendarEventBase[] = [
   {
@@ -23,61 +23,51 @@ const DUMMY_EVENTS: ICalendarEventBase[] = [
   },
 ];
 
-const MonthPage = ({ height, date }: { height: number; date: Dayjs }) => {
-  return (
-    <View style={styles.pageContainer}>
-      <CalendarBodyForMonthView
-        containerHeight={height - 120} // Adjusted for header and pager
-        targetDate={date}
-        events={DUMMY_EVENTS}
-        style={styles.calendarBody}
-        maxVisibleEventCount={3}
-        weekStartsOn={0} // Sunday
-        eventMinHeightForMonthView={20}
-        moreLabel={"{moreCount} More"}
-        showAdjacentMonths={true}
-        sortedMonthView={true}
-      />
-    </View>
-  );
-};
-
 export default function MonthViewTestPage() {
   const { height } = useWindowDimensions();
-  const [date, setDate] = useState(dayjs());
-  const pagerRef = useRef<PagerView>(null);
+  const [baseDate] = useState(dayjs()); // 固定的基准日期
+  const [currentPageIndex, setCurrentPageIndex] = useState(0); // 当前页面索引
+  const pagerRef = useRef<InfinitePagerImperativeApi>(null);
 
-  const dates = [date.subtract(1, "month"), date, date.add(1, "month")];
-
-  const onPageSelected = (e: any) => {
-    const { position } = e.nativeEvent;
-    if (position === 0 || position === 2) {
-      const newDate =
-        position === 0 ? date.subtract(1, "month") : date.add(1, "month");
-      setDate(newDate);
-      // Use timeout to allow state update before resetting pager
-      setTimeout(() => {
-        pagerRef.current?.setPageWithoutAnimation(1);
-      }, 0);
-    }
+  const MonthPage = ({ index }: { index: number }) => {
+    const pageDate = baseDate.add(index, "month");
+    return (
+      <View style={styles.pageContainer}>
+        <CalendarBodyForMonthView
+          containerHeight={height - 120} // Adjusted for header and pager
+          targetDate={pageDate}
+          events={DUMMY_EVENTS}
+          style={styles.calendarBody}
+          maxVisibleEventCount={3}
+          weekStartsOn={0} // Sunday
+          eventMinHeightForMonthView={20}
+          moreLabel={"{moreCount} More"}
+          showAdjacentMonths={true}
+          sortedMonthView={true}
+        />
+      </View>
+    );
   };
+
+  const onPageChange = (page: number) => {
+    // 更新当前页面索引
+    setCurrentPageIndex(page);
+  };
+
+  // 计算当前显示的月份
+  const currentDisplayDate = baseDate.add(currentPageIndex, "month");
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>{date.format("MMMM YYYY")}</Text>
-      <PagerView
+      <Text style={styles.header}>{currentDisplayDate.format("MMMM YYYY")}</Text>
+      <InfinitePager
         ref={pagerRef}
         style={styles.pagerView}
-        initialPage={1}
-        onPageSelected={onPageSelected}
-        key={date.format("YYYY-MM")} // Re-mount pager on date change to ensure correct state
-      >
-        {dates.map((d, i) => (
-          <View key={i}>
-            <MonthPage height={height} date={d} />
-          </View>
-        ))}
-      </PagerView>
+        PageComponent={MonthPage}
+        onPageChange={onPageChange}
+        initialIndex={0}
+        pageBuffer={3} // Keep 3 pages in memory
+      />
     </View>
   );
 }
