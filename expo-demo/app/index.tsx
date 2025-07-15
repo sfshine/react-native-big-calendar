@@ -8,6 +8,9 @@ export default function Index() {
       <Link href="/CalendarDemo" style={styles.button}>
         <Text style={styles.buttonText}>Open Calendar Demo</Text>
       </Link>
+      <Link href="/ThreeDaysViewPagerPage" style={styles.button}>
+        <Text style={styles.buttonText}>Open 3 Days View Test Page</Text>
+      </Link>
       <Link href="/MonthViewInfinitePagerTest" style={styles.button}>
         <Text style={styles.buttonText}>
           Open Month View Test Page (Infinite Pager)
