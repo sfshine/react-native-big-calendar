@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { StyleSheet, View, Text, useWindowDimensions } from "react-native";
 import dayjs, { Dayjs } from "dayjs";
 import {
+  CalendarHeader,
   defaultTheme,
   getDatesInNextThreeDays,
   ICalendarEventBase,
@@ -85,6 +86,29 @@ export default function ThreeDaysViewPagerPage() {
   const containerHeight = height - 160;
   const scrollOffsetMinutes = 480; // 8:00 AM
 
+  // 分离全天事件和日间事件
+  const allDayEvents = DUMMY_EVENTS.filter((event) => {
+    const start = dayjs(event.start);
+    const end = dayjs(event.end);
+    return (
+      start.hour() === 0 &&
+      start.minute() === 0 &&
+      end.hour() === 23 &&
+      end.minute() === 59
+    );
+  });
+
+  const daytimeEvents = DUMMY_EVENTS.filter((event) => {
+    const start = dayjs(event.start);
+    const end = dayjs(event.end);
+    return !(
+      start.hour() === 0 &&
+      start.minute() === 0 &&
+      end.hour() === 23 &&
+      end.minute() === 59
+    );
+  });
+
   return (
     <ThemeContext.Provider value={defaultTheme}>
       <View style={styles.container}>
@@ -104,11 +128,42 @@ export default function ThreeDaysViewPagerPage() {
 
             return (
               <View key={page.key} style={styles.pageContainer}>
+                <CalendarHeader
+                  dateRange={dateRange}
+                  cellHeight={cellHeight}
+                  locale="en"
+                  style={styles.headerContainer}
+                  allDayEventCellStyle={{
+                    backgroundColor: "#e3f2fd",
+                    borderRadius: 8,
+                    borderColor: "#1976d2",
+                    borderWidth: 1,
+                  }}
+                  allDayEventCellTextColor="#1976d2"
+                  allDayEvents={allDayEvents}
+                  onPressDateHeader={(date) => {
+                    console.log("Date header pressed:", date);
+                  }}
+                  onPressEvent={(event) => {
+                    console.log("All day event pressed:", event.title);
+                  }}
+                  headerContentStyle={{}}
+                  dayHeaderStyle={{}}
+                  dayHeaderHighlightColor=""
+                  weekDayHeaderHighlightColor=""
+                  showAllDayEventCell={true}
+                  hideHours={false}
+                  showWeekNumber={false}
+                  weekNumberPrefix=""
+                  allDayEventCellAccessibilityProps={{}}
+                  headerContainerAccessibilityProps={{}}
+                  headerCellAccessibilityProps={{}}
+                />
                 <CalendarBody
                   cellHeight={cellHeight}
                   containerHeight={containerHeight}
                   dateRange={dateRange}
-                  events={DUMMY_EVENTS}
+                  events={daytimeEvents}
                   scrollOffsetMinutes={scrollOffsetMinutes}
                   ampm={false}
                   showTime={true}
@@ -140,7 +195,6 @@ export default function ThreeDaysViewPagerPage() {
                   isEventOrderingEnabled={true}
                   showWeekNumber={false}
                   showVerticalScrollIndicator={false}
-                  scrollEnabled={true}
                   enableEnrichedEvents={false}
                   eventsAreSorted={false}
                   timeslots={0}
@@ -181,5 +235,8 @@ const styles = StyleSheet.create({
   },
   calendarBody: {
     flex: 1,
+  },
+  headerContainer: {
+    backgroundColor: "#f5f5f5",
   },
 });
