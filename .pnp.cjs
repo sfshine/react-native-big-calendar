@@ -66,6 +66,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["react-native", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:0.76.9"],\
             ["react-native-gesture-handler", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:2.27.1"],\
             ["react-native-infinite-pager", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:0.3.18"],\
+            ["react-native-pager-view", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:6.8.1"],\
             ["react-native-reanimated", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:3.18.0"],\
             ["react-native-web", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:0.19.13"],\
             ["rimraf", "npm:5.0.10"],\
@@ -13692,6 +13693,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["react-native", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:0.76.9"],\
             ["react-native-gesture-handler", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:2.27.1"],\
             ["react-native-infinite-pager", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:0.3.18"],\
+            ["react-native-pager-view", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:6.8.1"],\
             ["react-native-reanimated", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:3.18.0"],\
             ["react-native-web", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:0.19.13"],\
             ["rimraf", "npm:5.0.10"],\
@@ -13779,6 +13781,32 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/__virtual__/react-native-is-edge-to-edge-virtual-e3f987f7e2/0/cache/react-native-is-edge-to-edge-npm-1.1.7-d03bfaa772-4cdf2b2fb5.zip/node_modules/react-native-is-edge-to-edge/",\
           "packageDependencies": [\
             ["react-native-is-edge-to-edge", "virtual:f92311138dc5bd6cc51a905d95a674db8443fa5c8abc3a7774d83440555c97cffc4234620d0a5760e1b286af6d2a7d88d59c580bd380ea3bc610a8604665772f#npm:1.1.7"],\
+            ["@types/react", null],\
+            ["@types/react-native", "npm:0.65.36"],\
+            ["react", "npm:18.3.1"],\
+            ["react-native", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:0.76.9"]\
+          ],\
+          "packagePeers": [\
+            "@types/react-native",\
+            "@types/react",\
+            "react-native",\
+            "react"\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["react-native-pager-view", [\
+        ["npm:6.8.1", {\
+          "packageLocation": "./.yarn/unplugged/react-native-pager-view-virtual-631421d978/node_modules/react-native-pager-view/",\
+          "packageDependencies": [\
+            ["react-native-pager-view", "npm:6.8.1"]\
+          ],\
+          "linkType": "SOFT"\
+        }],\
+        ["virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:6.8.1", {\
+          "packageLocation": "./.yarn/unplugged/react-native-pager-view-virtual-631421d978/node_modules/react-native-pager-view/",\
+          "packageDependencies": [\
+            ["react-native-pager-view", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:6.8.1"],\
             ["@types/react", null],\
             ["@types/react-native", "npm:0.65.36"],\
             ["react", "npm:18.3.1"],\

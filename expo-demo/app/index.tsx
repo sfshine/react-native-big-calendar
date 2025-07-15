@@ -8,6 +8,9 @@ export default function Index() {
       <Link href="/CalendarDemo" style={styles.button}>
         <Text style={styles.buttonText}>Open Calendar Demo</Text>
       </Link>
+      <Link href="/MonthViewTestPage" style={styles.button}>
+        <Text style={styles.buttonText}>Open Month View Test Page</Text>
+      </Link>
     </View>
   )
 }
