@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import dayjs from 'dayjs'
 import React from 'react'
-import { Alert, Text, View } from 'react-native'
-import { TouchableOpacity } from 'react-native-gesture-handler'
+import { Alert, Text, TouchableOpacity, View } from 'react-native'
 
 import { Calendar, type EventRenderer, type HasDateRange, type ICalendarEventBase } from '../src'
 import { AppHeader, HEADER_HEIGHT } from './components/AppHeader'

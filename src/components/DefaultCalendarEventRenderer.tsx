@@ -1,7 +1,6 @@
 import dayjs from 'dayjs'
 import * as React from 'react'
-import { Text } from 'react-native'
-import { TouchableOpacity } from 'react-native-gesture-handler'
+import { Text, TouchableOpacity } from 'react-native'
 
 import type { CalendarTouchableOpacityProps, ICalendarEventBase } from '../interfaces'
 import { useTheme } from '../theme/ThemeContext'

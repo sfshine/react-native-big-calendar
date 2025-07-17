@@ -1,46 +1,70 @@
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { Link } from "expo-router";
+import { router } from 'expo-router'
+import { Button, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native'
 
-export default function Index() {
+const EXAMPLES = [
+  {
+    name: 'Calendar Manager',
+    path: 'CalendarManager',
+  },
+  {
+    name: 'Calendar',
+    path: 'CalendarDemo',
+  },
+  {
+    name: 'Month view pager',
+    path: 'MonthViewPagerPage',
+  },
+  {
+    name: '3-days view pager',
+    path: 'ThreeDaysViewPagerPage',
+  },
+  {
+    name: 'Month view infinite pager',
+    path: 'MonthViewInfinitePagerTest',
+  },
+]
+
+export default function App() {
   return (
-    <View style={styles.container}>
-      <Link href="/CalendarDemo" style={styles.button}>
-        <Text style={styles.buttonText}>Open Calendar Demo</Text>
-      </Link>
-      <Link href="/ThreeDaysViewPagerPage" style={styles.button}>
-        <Text style={styles.buttonText}>Open 3 Days View Test Page</Text>
-      </Link>
-      <Link href="/MonthViewInfinitePagerTest" style={styles.button}>
-        <Text style={styles.buttonText}>
-          Open Month View Test Page (Infinite Pager)
-        </Text>
-      </Link>
-      <Link href="/MonthViewPagerPage" style={styles.button}>
-        <Text style={styles.buttonText}>
-          Open Month View Test Page (Pager View)
-        </Text>
-      </Link>
-    </View>
-  );
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <View style={styles.header}>
+          <Text style={styles.title}>React Native Big Calendar</Text>
+          <Text style={styles.subtitle}>Examples</Text>
+        </View>
+        <View style={styles.list}>
+          {EXAMPLES.map((e) => (
+            <View key={e.path} style={styles.button}>
+              <Button title={e.name} onPress={() => router.push(e.path as any)} />
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#fff',
+  },
+  header: {
+    padding: 24,
+    backgroundColor: '#eee',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    marginTop: 8,
+    fontSize: 16,
+  },
+  list: {
+    padding: 24,
   },
   button: {
-    backgroundColor: "#007bff",
-    padding: 15,
-    borderRadius: 10,
-    marginVertical: 10,
+    marginVertical: 8,
   },
-  buttonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-});
+})
