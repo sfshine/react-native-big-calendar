@@ -75,6 +75,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["storybook", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:8.6.14"],\
             ["tailwind-rn", "npm:3.0.1"],\
             ["ts-loader", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:9.5.2"],\
+            ["tslib", "npm:2.8.1"],\
             ["typescript", "patch:typescript@npm%3A5.8.3#~builtin<compat/typescript>::version=5.8.3&hash=14eedb"],\
             ["webpack", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:5.99.9"],\
             ["webpack-cli", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:6.0.1"],\
@@ -13702,6 +13703,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["storybook", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:8.6.14"],\
             ["tailwind-rn", "npm:3.0.1"],\
             ["ts-loader", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:9.5.2"],\
+            ["tslib", "npm:2.8.1"],\
             ["typescript", "patch:typescript@npm%3A5.8.3#~builtin<compat/typescript>::version=5.8.3&hash=14eedb"],\
             ["webpack", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:5.99.9"],\
             ["webpack-cli", "virtual:8da4f5544923b453ac3e487718c481d61a35154eef82dca5a481da7160f5a5d577e7a158b5b7c31606882beec209c17434a26b0e4dfe5cd11fde7af803a4902b#npm:6.0.1"],\

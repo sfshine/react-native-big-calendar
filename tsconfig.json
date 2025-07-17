@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "jsx": "react",
     "types": ["@types/node", "@types/jest"],
-    "lib": [],
+    "lib": ["es2015", "dom"],
     "noEmit": true,
 
     /* Strict Type-Checking Options */

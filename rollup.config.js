@@ -9,9 +9,10 @@ export default {
       tslib: require('tslib'),
       declaration: true,
       tsconfig: 'tsconfig.prod.json',
+      check: false,
     }),
   ],
-  external: (id) => !id.startsWith('.') && !id.startsWith('/') && id !== 'tslib',
+  external: ['react', 'react-native', 'react-native-gesture-handler', 'react-native-infinite-pager', 'react-native-reanimated', 'react-native-pager-view', 'dayjs', 'dayjs/plugin/duration', 'dayjs/plugin/isBetween', 'dayjs/plugin/isoWeek', 'calendarize'],
   output: [
     {
       file: 'build/index.js',
