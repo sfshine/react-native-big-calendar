@@ -357,6 +357,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   {
                     ...getCalendarCellStyle(date?.toDate(), i),
                   },
+                  isCellSelected && { backgroundColor: "rgba(0,0,0,0.1)" },
                 ]}
                 key={`${ii}-${date?.toDate()}`}
                 onLayout={({ nativeEvent: { layout } }) =>
@@ -369,18 +370,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                 }
                 {...calendarCellAccessibilityPropsForMonthView}
               >
-                {isCellSelected && expandedWeek === i ? (
-                  <View
-                    style={{
-                      flex: 1,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      zIndex: 99,
-                    }}
-                  >
-                    <Text>收起</Text>
-                  </View>
-                ) : (
                   <React.Fragment>
                     <TouchableOpacity
                       onPress={() =>
@@ -473,7 +462,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                         />
                       )}
                   </React.Fragment>
-                )}
               </TouchableOpacity>
             );
           })}
