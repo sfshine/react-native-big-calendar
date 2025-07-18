@@ -29,6 +29,13 @@ import {
   useNow,
 } from "react-native-big-calendar";
 import dayjs from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
+import duration from "dayjs/plugin/duration";
+import isoWeek from "dayjs/plugin/isoWeek";
+
+dayjs.extend(isBetween);
+dayjs.extend(duration);
+dayjs.extend(isoWeek);
 
 interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
   containerHeight: number;
@@ -362,7 +369,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                     { flexDirection: "column" },
                     {
                       minHeight: minCellHeight,
-                      zIndex: ii * -1,
                     },
                     {
                       ...getCalendarCellStyle(date?.toDate(), i),
