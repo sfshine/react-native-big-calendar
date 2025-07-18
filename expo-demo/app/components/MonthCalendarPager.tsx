@@ -44,6 +44,7 @@ export default memo(function MonthCalendarPager({
 
   const pageCount = 12; // For month view, we can have a fixed number of pages
   const initialPage = 6; // Centered around the baseDate
+  const offscreenPageLimit = 1;
 
   const pages = useMemo(() => {
     return Array.from({ length: pageCount }, (_, index) => {
@@ -65,37 +66,47 @@ export default memo(function MonthCalendarPager({
         {currentDisplayDate.format("MMMM YYYY")}
       </Text>
       <PagerView
+        offscreenPageLimit={offscreenPageLimit}
         ref={pagerRef}
         style={styles.pagerView}
         initialPage={initialPage}
         onPageSelected={onPageSelected}
       >
-        {pages.map((page) => (
-          <View key={page.key} style={styles.pageContainer}>
-            <CalendarHeaderForMonthView
-              dateRange={getDatesInMonth(page.date)}
-              style={styles.headerComponent}
-              locale="en"
-              weekStartsOn={0}
-              showWeekNumber={false}
-              weekNumberPrefix=""
-              headerContainerAccessibilityProps={{}}
-              headerCellAccessibilityProps={{}}
-            />
-            <CalendarBodyForMonthView
-              containerHeight={height - 220} // Adjusted for header
-              targetDate={page.date}
-              events={allEvents}
-              style={styles.calendarBody}
-              maxVisibleEventCount={3}
-              weekStartsOn={0} // Sunday
-              eventMinHeightForMonthView={20}
-              moreLabel={"{moreCount} More"}
-              showAdjacentMonths={true}
-              sortedMonthView={true}
-            />
-          </View>
-        ))}
+        {pages.map((page, index) => {
+          const isPageCached =
+            Math.abs(index - currentPageIndex) <= offscreenPageLimit;
+
+          if (!isPageCached) {
+            return <View key={page.key} style={styles.pageContainer} />;
+          }
+
+          return (
+            <View key={page.key} style={styles.pageContainer}>
+              <CalendarHeaderForMonthView
+                dateRange={getDatesInMonth(page.date)}
+                style={styles.headerComponent}
+                locale="en"
+                weekStartsOn={0}
+                showWeekNumber={false}
+                weekNumberPrefix=""
+                headerContainerAccessibilityProps={{}}
+                headerCellAccessibilityProps={{}}
+              />
+              <CalendarBodyForMonthView
+                containerHeight={height - 220} // Adjusted for header
+                targetDate={page.date}
+                events={allEvents}
+                style={styles.calendarBody}
+                maxVisibleEventCount={3}
+                weekStartsOn={0} // Sunday
+                eventMinHeightForMonthView={20}
+                moreLabel={"{moreCount} More"}
+                showAdjacentMonths={true}
+                sortedMonthView={true}
+              />
+            </View>
+          );
+        })}
       </PagerView>
     </>
   );

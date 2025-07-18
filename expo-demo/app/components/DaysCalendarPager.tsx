@@ -40,6 +40,7 @@ export default memo(function DaysCalendarPager({
 
   const pageCount = 20; // For day/3-day view
   const initialPage = 10; // Centered around the baseDate
+  const offscreenPageLimit = 3;
 
   const allDayEvents = useMemo(
     () =>
@@ -89,12 +90,12 @@ export default memo(function DaysCalendarPager({
   }, [baseDate, pageCount, initialPage, viewMode]);
 
   const offset =
-    viewMode === "day" ? currentPageIndex - initialPage : (currentPageIndex - initialPage) * 3;
+    viewMode === "day"
+      ? currentPageIndex - initialPage
+      : (currentPageIndex - initialPage) * 3;
   const currentDisplayDate = baseDate.add(offset, "day");
   const endDate =
-    viewMode === "day"
-      ? currentDisplayDate
-      : currentDisplayDate.add(2, "day");
+    viewMode === "day" ? currentDisplayDate : currentDisplayDate.add(2, "day");
 
   const cellHeight = 60;
   const containerHeight = height - 220;
@@ -134,13 +135,21 @@ export default memo(function DaysCalendarPager({
         {viewMode === "day" ? "Day View" : "3 Days View"}
       </Text>
       <PagerView
+        offscreenPageLimit={3}
         ref={pagerRef}
         style={styles.pagerView}
         initialPage={initialPage}
         onPageSelected={onPageSelected}
       >
-        {pages.map((page) => {
+        {pages.map((page, index) => {
+          console.log("DaysCalendarPager: page", page);
           const dateRange: Dayjs[] = page.dateRange;
+          const isPageCached =
+            Math.abs(index - currentPageIndex) <= offscreenPageLimit;
+
+          if (!isPageCached) {
+            return <View key={page.key} style={styles.pageContainer} />;
+          }
 
           return (
             <View key={page.key} style={styles.pageContainer}>
