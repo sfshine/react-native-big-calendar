@@ -6,6 +6,7 @@ import {
   FlatList,
   LayoutAnimation,
   Platform,
+  StyleSheet,
   Text,
   TouchableHighlight,
   TouchableOpacity,
@@ -260,8 +261,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     return (
       <Text
         style={[
-          { textAlign: "center" },
-          { fontSize: 13 },
+          styles.dateCellText,
           {
             color:
               date?.format(SIMPLE_DATE_FORMAT) ===
@@ -271,9 +271,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                 ? "#9E9E9E"
                 : "#212121",
           },
-          {
-            ...getCalendarCellTextStyle(date?.toDate(), index),
-          },
+          getCalendarCellTextStyle(date?.toDate(), index),
         ]}
       >
         {date?.format("D")}
@@ -285,37 +283,23 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     return (
       <View
         style={[
-          { flex: 1 },
-          { flexDirection: "row" },
+          styles.weekRow,
           Platform.OS === "android" && style, // TODO: in Android, backgroundColor is not applied to child components
-          {
-            height: cellHeight,
-          },
+          { height: cellHeight },
         ]}
       >
         {showWeekNumber ? (
           <View
             style={[
+              styles.weekNumberContainer,
               i > 0 && { borderTopWidth: 1 },
-              { borderColor: "#E0E0E0" },
-              { padding: 2 },
-              { width: 20 },
-              { flexDirection: "column" },
-              {
-                height: cellHeight,
-              },
+              { height: cellHeight },
             ]}
             key={"weekNumber"}
             {...calendarCellAccessibilityProps}
           >
             <Text
-              style={[
-                { textAlign: "center" },
-                { fontSize: 13 }, // Equivalent to theme.typography.sm
-                {
-                  color: "#212121", // A common gray-800
-                },
-              ]}
+              style={styles.weekNumberText}
             >
               {week.length > 0
                 ? targetDate
@@ -345,18 +329,11 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                 }
                 onPress={() => date && handleDayPress(date, i)}
                 style={[
+                  styles.dateCell,
                   i > 0 && { borderTopWidth: 1 },
                   (ii > 0 || showWeekNumber) && { borderLeftWidth: 1 },
-                  { borderColor: "#E0E0E0" },
-                  { padding: 2 },
-                  { flex: 1 },
-                  { flexDirection: "column" },
-                  {
-                    height: cellHeight,
-                  },
-                  {
-                    ...getCalendarCellStyle(date?.toDate(), i),
-                  },
+                  { height: cellHeight },
+                  getCalendarCellStyle(date?.toDate(), i),
                   isCellSelected && { backgroundColor: "rgba(0,0,0,0.1)" },
                 ]}
                 key={`${ii}-${date?.toDate()}`}
@@ -402,10 +379,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                               maxVisibleEventCount ? (
                               <Text
                                 key={`${index}-${event.start}-${event.title}-${event.end}`}
-                                style={[
-                                  { fontSize: 11 }, // Equivalent to theme.typography.moreLabel
-                                  { marginTop: 2, color: "#424242" }, // A common moreLabel color
-                                ]}
+                                style={styles.moreLabelText}
                                 onPress={() =>
                                   onPressMoreLabel?.(events, date.toDate())
                                 }
@@ -444,11 +418,9 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                         /* In this case, we render `TouchableGradually` on the date cell to prevent event cell's touch events from being called. */
                         <TouchableGradually
                           style={{
+                            ...styles.touchableGradually,
                             height: calendarCellHeight,
                             width: Math.floor(calendarWidth / 7),
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
                           }}
                           onLongPress={() =>
                             date &&
@@ -472,16 +444,8 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   return (
     <View
       style={[
-        {
-          height: containerHeight,
-        },
-        { flexDirection: "column" },
-        { flex: 1 },
-        { borderBottomWidth: 1 },
-        { borderLeftWidth: 1 },
-        { borderRightWidth: 1 },
-        { borderRadius: 3 },
-        { borderColor: "#E0E0E0" }, // A common gray-200
+        styles.container,
+        { height: containerHeight },
         style,
       ]}
       onLayout={({ nativeEvent: { layout } }) => {
@@ -596,6 +560,53 @@ function DayEventsList<T extends ICalendarEventBase>({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "column",
+    flex: 1,
+    borderBottomWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderRadius: 3,
+    borderColor: "#E0E0E0", // A common gray-200
+  },
+  dateCellText: {
+    textAlign: "center",
+    fontSize: 13,
+  },
+  weekRow: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  weekNumberContainer: {
+    borderColor: "#E0E0E0",
+    padding: 2,
+    width: 20,
+    flexDirection: "column",
+  },
+  weekNumberText: {
+    textAlign: "center",
+    fontSize: 13, // Equivalent to theme.typography.sm
+    color: "#212121", // A common gray-800
+  },
+  dateCell: {
+    borderColor: "#E0E0E0",
+    padding: 2,
+    flex: 1,
+    flexDirection: "column",
+  },
+  moreLabelText: {
+    fontSize: 11, // Equivalent to theme.typography.moreLabel
+    marginTop: 2,
+    color: "#424242", // A common moreLabel color
+  },
+  touchableGradually: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+  },
+});
 
 export const CalendarBodyForMonthView = typedMemo(_CalendarBodyForMonthView);
 
