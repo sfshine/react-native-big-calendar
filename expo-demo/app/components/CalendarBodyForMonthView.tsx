@@ -17,7 +17,6 @@ import {
 import {
   CalendarCellStyle,
   CalendarCellTextStyle,
-  CalendarEventForMonthView,
   EventCellStyle,
   EventRenderer,
   HorizontalDirection,
@@ -28,6 +27,7 @@ import {
   typedMemo,
   useNow,
 } from "react-native-big-calendar";
+import { CalendarEventForMonthView } from "./CalendarEventForMonthView";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import duration from "dayjs/plugin/duration";
