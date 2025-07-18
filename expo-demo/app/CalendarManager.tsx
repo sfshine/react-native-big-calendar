@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import dayjs, { Dayjs } from "dayjs";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import {
   Modal,
   SafeAreaView,
@@ -8,7 +8,12 @@ import {
   Text,
   useWindowDimensions,
   View,
+  Platform,
 } from "react-native";
+
+declare global {
+  var nativeFabricUIManager: any;
+}
 import {
   defaultTheme,
   ICalendarEventBase,
@@ -71,6 +76,12 @@ export default function CalendarManager() {
   const [baseDate] = useState(dayjs());
   const [currentPageIndex, setCurrentPageIndex] = useState(10);
   const pagerRef = useRef(null);
+
+  useEffect(() => {
+    const isFabricEnabled = !!global.nativeFabricUIManager;
+    console.log('Is Fabric Enabled (via global.nativeFabricUIManager):', isFabricEnabled);
+    console.log('React Native Version:', Platform.constants.reactNativeVersion);
+  }, []);
 
   const onPageSelected = (event: any) => {
     const position = event.nativeEvent.position;
