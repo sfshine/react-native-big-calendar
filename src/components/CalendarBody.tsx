@@ -21,7 +21,6 @@ import type {
 import { useTheme } from '../theme/ThemeContext'
 import {
   SIMPLE_DATE_FORMAT,
-  enrichEvents,
   getCountOfEventsAtEvent,
   getOrderOfEvent,
   getRelativeTopInDay,
@@ -71,9 +70,6 @@ interface CalendarBodyProps<T extends ICalendarEventBase> {
   showWeekNumber?: boolean
   showVerticalScrollIndicator?: boolean
   scrollEnabled?: boolean
-  enrichedEventsByDate?: Record<string, T[]>
-  enableEnrichedEvents?: boolean
-  eventsAreSorted?: boolean
   timeslots?: number
   hourComponent?: HourRenderer
 }
@@ -82,21 +78,21 @@ function _CalendarBody<T extends ICalendarEventBase>({
   containerHeight,
   cellHeight,
   dateRange,
-  style,
-  onLongPressCell,
-  onPressCell,
   events,
-  onPressEvent,
+  scrollOffsetMinutes,
+  ampm,
+  showTime,
+  style,
   eventCellTextColor,
   eventCellStyle,
   eventCellAccessibilityProps = {},
   calendarCellStyle,
   calendarCellAccessibilityProps = {},
-  ampm,
-  showTime,
-  scrollOffsetMinutes,
   hideNowIndicator,
   overlapOffset,
+  onLongPressCell,
+  onPressCell,
+  onPressEvent,
   renderEvent,
   headerComponent = null,
   headerComponentStyle = {},
@@ -108,9 +104,6 @@ function _CalendarBody<T extends ICalendarEventBase>({
   showWeekNumber = false,
   showVerticalScrollIndicator = false,
   scrollEnabled = true,
-  enrichedEventsByDate,
-  enableEnrichedEvents = false,
-  eventsAreSorted = false,
   timeslots = 0,
   hourComponent,
 }: CalendarBodyProps<T>) {
@@ -156,16 +149,7 @@ function _CalendarBody<T extends ICalendarEventBase>({
     [onLongPressCell],
   )
 
-  const internalEnrichedEventsByDate = React.useMemo(() => {
-    if (enableEnrichedEvents) {
-      return enrichedEventsByDate || enrichEvents(events, eventsAreSorted)
-    }
-    return {}
-  }, [enableEnrichedEvents, enrichedEventsByDate, events, eventsAreSorted])
-
   const enrichedEvents = React.useMemo(() => {
-    if (enableEnrichedEvents) return []
-
     if (isEventOrderingEnabled) {
       // Events are being sorted once so we dont have to do it on each loop
       const sortedEvents = events.sort((a, b) => a.start.getDate() - b.start.getDate())
@@ -177,7 +161,39 @@ function _CalendarBody<T extends ICalendarEventBase>({
     }
 
     return events
-  }, [enableEnrichedEvents, events, isEventOrderingEnabled])
+  }, [events, isEventOrderingEnabled])
+
+  const eventsByDateMap = React.useMemo(() => {
+    const map: Record<string, T[]> = {}
+    enrichedEvents.forEach((event) => {
+      const startDate = dayjs(event.start).format(SIMPLE_DATE_FORMAT)
+      const endDate = dayjs(event.end).format(SIMPLE_DATE_FORMAT)
+
+      // Handle single-day events
+      if (startDate === endDate) {
+        if (!map[startDate]) {
+          map[startDate] = []
+        }
+        map[startDate].push(event)
+      } else {
+        // Handle multi-day events
+        let currentDate = dayjs(event.start).startOf('day')
+        while (currentDate.isBefore(dayjs(event.end).endOf('day'))) {
+          const formattedDate = currentDate.format(SIMPLE_DATE_FORMAT)
+          if (!map[formattedDate]) {
+            map[formattedDate] = []
+          }
+          map[formattedDate].push({
+            ...event,
+            start: currentDate.toDate(),
+            end: currentDate.endOf('day').toDate(),
+          })
+          currentDate = currentDate.add(1, 'day')
+        }
+      }
+    })
+    return map
+  }, [enrichedEvents])
 
   const _renderMappedEvent = React.useCallback(
     (event: T, index: number) => {
@@ -218,56 +234,9 @@ function _CalendarBody<T extends ICalendarEventBase>({
 
   const _renderEvents = React.useCallback(
     (date: dayjs.Dayjs) => {
-      if (enableEnrichedEvents) {
-        return (internalEnrichedEventsByDate[date.format(SIMPLE_DATE_FORMAT)] || []).map(
-          _renderMappedEvent,
-        )
-      }
-
-      return (
-        <>
-          {/* Render events of this date */}
-          {/* M  T  (W)  T  F  S  S */}
-          {/*       S-E             */}
-          {(enrichedEvents as T[])
-            .filter(({ start }) =>
-              dayjs(start).isBetween(date.startOf('day'), date.endOf('day'), null, '[)'),
-            )
-            .map(_renderMappedEvent)}
-
-          {/* Render events which starts before this date and ends on this date */}
-          {/* M  T  (W)  T  F  S  S */}
-          {/* S------E              */}
-          {(enrichedEvents as T[])
-            .filter(
-              ({ start, end }) =>
-                dayjs(start).isBefore(date.startOf('day')) &&
-                dayjs(end).isBetween(date.startOf('day'), date.endOf('day'), null, '[)'),
-            )
-            .map((event) => ({
-              ...event,
-              start: dayjs(event.end).startOf('day'),
-            }))
-            .map(_renderMappedEvent)}
-
-          {/* Render events which starts before this date and ends after this date */}
-          {/* M  T  (W)  T  F  S  S */}
-          {/*    S-------E          */}
-          {(enrichedEvents as T[])
-            .filter(
-              ({ start, end }) =>
-                dayjs(start).isBefore(date.startOf('day')) && dayjs(end).isAfter(date.endOf('day')),
-            )
-            .map((event) => ({
-              ...event,
-              start: dayjs(event.end).startOf('day'),
-              end: dayjs(event.end).endOf('day'),
-            }))
-            .map(_renderMappedEvent)}
-        </>
-      )
+      return (eventsByDateMap[date.format(SIMPLE_DATE_FORMAT)] || []).map(_renderMappedEvent)
     },
-    [_renderMappedEvent, enableEnrichedEvents, enrichedEvents, internalEnrichedEventsByDate],
+    [_renderMappedEvent, eventsByDateMap],
   )
 
   const theme = useTheme()
@@ -292,50 +261,56 @@ function _CalendarBody<T extends ICalendarEventBase>({
         <View style={[u['flex-1'], theme.isRTL ? u['flex-row-reverse'] : u['flex-row']]}>
           {(!hideHours || showWeekNumber) && (
             <View style={[u['z-20'], u['w-50']]}>
-              {hours.map((hour) => (
-                <HourGuideColumn
-                  key={hour}
-                  cellHeight={cellHeight}
-                  hour={hour}
-                  ampm={ampm}
-                  hourStyle={hourStyle}
-                  calendarCellAccessibilityProps={calendarCellAccessibilityProps}
-                  hourComponent={hourComponent}
-                />
-              ))}
+              {hours.map((hour) => {
+                return (
+                  <HourGuideColumn
+                    key={hour}
+                    cellHeight={cellHeight}
+                    hour={hour}
+                    ampm={ampm}
+                    hourStyle={hourStyle}
+                    calendarCellAccessibilityProps={calendarCellAccessibilityProps}
+                    hourComponent={hourComponent}
+                  />
+                );
+              })}
             </View>
           )}
 
-          {dateRange.map((date) => (
-            <View style={[u['flex-1'], u['overflow-hidden']]} key={date.toString()}>
-              {hours.map((hour, index) => (
-                <HourGuideCell
-                  key={hour}
-                  cellHeight={cellHeight}
-                  date={date}
-                  hour={hour}
-                  onLongPress={_onLongPressCell}
-                  onPress={_onPressCell}
-                  index={index}
-                  calendarCellStyle={calendarCellStyle}
-                  calendarCellAccessibilityProps={calendarCellAccessibilityProps}
-                  timeslots={timeslots}
-                />
-              ))}
-              {_renderEvents(date)}
-              {isToday(date) && !hideNowIndicator && (
-                <View
-                  style={[
-                    styles.nowIndicator,
-                    { backgroundColor: theme.palette.nowIndicator },
-                    {
-                      top: `${getRelativeTopInDay(now, minHour, hours.length)}%`,
-                    },
-                  ]}
-                />
-              )}
-            </View>
-          ))}
+          {dateRange.map((date) => {
+            return (
+              <View style={[u['flex-1'], u['overflow-hidden']]} key={date.toString()}>
+                {hours.map((hour, index) => {
+                  return (
+                    <HourGuideCell
+                      key={hour}
+                      cellHeight={cellHeight}
+                      date={date}
+                      hour={hour}
+                      onLongPress={_onLongPressCell}
+                      onPress={_onPressCell}
+                      index={index}
+                      calendarCellStyle={calendarCellStyle}
+                      calendarCellAccessibilityProps={calendarCellAccessibilityProps}
+                      timeslots={timeslots}
+                    />
+                  );
+                })}
+                {_renderEvents(date)}
+                {isToday(date) && !hideNowIndicator && (
+                  <View
+                    style={[
+                      styles.nowIndicator,
+                      { backgroundColor: theme.palette.nowIndicator },
+                      {
+                        top: `${getRelativeTopInDay(now, minHour, hours.length)}%`,
+                      },
+                    ]}
+                  />
+                )}
+              </View>
+            );
+          })}
         </View>
       </ScrollView>
     </React.Fragment>
