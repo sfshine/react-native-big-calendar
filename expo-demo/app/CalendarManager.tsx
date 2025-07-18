@@ -13,6 +13,7 @@ import {
   CalendarBody,
   CalendarBodyForMonthView,
   CalendarHeader,
+  CalendarHeaderForMonthView,
   defaultTheme,
   ICalendarEventBase,
   Schedule,
@@ -229,6 +230,25 @@ export default function CalendarManager() {
 
     if (viewMode === "month") {
       const currentDisplayDate = baseDate.add(currentPageIndex - 6, "month");
+      
+      // Helper function to get dates in month (similar to CalendarContainer)
+      const getDatesInMonth = (date: Dayjs): Dayjs[] => {
+        const startOfMonth = date.startOf('month');
+        const endOfMonth = date.endOf('month');
+        const startOfCalendar = startOfMonth.startOf('week');
+        const endOfCalendar = endOfMonth.endOf('week');
+        
+        const dates: Dayjs[] = [];
+        let current = startOfCalendar;
+        
+        while (current.isBefore(endOfCalendar) || current.isSame(endOfCalendar, 'day')) {
+          dates.push(current);
+          current = current.add(1, 'day');
+        }
+        
+        return dates;
+      };
+      
       return (
         <>
           <Text style={styles.header}>
@@ -242,8 +262,18 @@ export default function CalendarManager() {
           >
             {pages.map((page) => (
               <View key={page.key} style={styles.pageContainer}>
+                <CalendarHeaderForMonthView
+                  dateRange={getDatesInMonth(page.date)}
+                  style={styles.headerComponent}
+                  locale="en"
+                  weekStartsOn={0}
+                  showWeekNumber={false}
+                  weekNumberPrefix=""
+                  headerContainerAccessibilityProps={{}}
+                  headerCellAccessibilityProps={{}}
+                />
                 <CalendarBodyForMonthView
-                  containerHeight={height - 180}
+                  containerHeight={height - 220} // Adjusted for header
                   targetDate={page.date}
                   events={allEvents}
                   style={styles.calendarBody}
