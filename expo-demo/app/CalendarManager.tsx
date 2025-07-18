@@ -26,43 +26,43 @@ import { BWTouchableOpacity } from "./BWTouchableOpacity";
 // Dummy events, can be shared
 const DUMMY_EVENTS: ICalendarEventBase[] = [
   {
-    title: "Morning Meeting",
+    title: "1Morning Meeting",
     start: dayjs().set("hour", 9).set("minute", 0).toDate(),
     end: dayjs().set("hour", 10).set("minute", 30).toDate(),
   },
   {
-    title: "Meeting",
+    title: "2Meeting",
     start: dayjs().set("date", 10).set("hour", 10).toDate(),
     end: dayjs().set("date", 10).set("hour", 12).toDate(),
   },
   {
-    title: "Lunch Break",
+    title: "3Lunch Break",
     start: dayjs().add(1, "day").set("hour", 12).set("minute", 0).toDate(),
     end: dayjs().add(1, "day").set("hour", 13).set("minute", 0).toDate(),
   },
   {
-    title: "Team Standup",
+    title: "4Team Standup",
     start: dayjs().add(2, "day").set("hour", 15).set("minute", 0).toDate(),
     end: dayjs().add(2, "day").set("hour", 15).set("minute", 30).toDate(),
   },
   {
-    title: "All Day Event",
+    title: "5All Day Event",
     start: dayjs().add(1, "day").startOf("day").toDate(),
     end: dayjs().add(1, "day").endOf("day").toDate(),
   },
   {
-    title: "Multi-day Event",
-    start: dayjs().add(1, "day").set("hour", 14).toDate(),
+    title: "6Multi-day Event",
+    start: dayjs().add(-10, "day").set("hour", 14).toDate(),
     end: dayjs().add(2, "day").set("hour", 16).toDate(),
   },
   {
-    title: "Project Deadline",
+    title: "7FProject Deadline",
     start: dayjs().set("date", 20).set("hour", 9).toDate(),
     end: dayjs().set("date", 22).set("hour", 17).toDate(),
   },
 ];
 
-const allEvents = [...DUMMY_EVENTS, ...eventList];
+const allEvents = [...DUMMY_EVENTS];
 
 type ViewMode = "day" | "3days" | "month" | "schedule";
 
