@@ -137,39 +137,39 @@ export default function CalendarManager() {
       animationType="fade"
       onRequestClose={() => setMenuVisible(false)}
     >
-      <BWTouchableOpacity
-        style={styles.modalOverlay}
-        onPress={() => setMenuVisible(false)}
-      >
-        <GestureHandlerRootView
-          style={[styles.menuContainer, { width: width * 0.6 }]}
+      <GestureHandlerRootView>
+        <BWTouchableOpacity
+          style={styles.modalOverlay}
+          onPress={() => setMenuVisible(false)}
         >
-          <BWTouchableOpacity
-            style={styles.menuItem}
-            onPress={() => switchViewMode("day")}
-          >
-            <Text>Day</Text>
-          </BWTouchableOpacity>
-          <BWTouchableOpacity
-            style={styles.menuItem}
-            onPress={() => switchViewMode("3days")}
-          >
-            <Text>3 Days</Text>
-          </BWTouchableOpacity>
-          <BWTouchableOpacity
-            style={styles.menuItem}
-            onPress={() => switchViewMode("month")}
-          >
-            <Text>Month</Text>
-          </BWTouchableOpacity>
-          <BWTouchableOpacity
-            style={styles.menuItem}
-            onPress={() => switchViewMode("schedule")}
-          >
-            <Text>Schedule</Text>
-          </BWTouchableOpacity>
-        </GestureHandlerRootView>
-      </BWTouchableOpacity>
+          <View style={[styles.menuContainer, { width: width * 0.6 }]}>
+            <BWTouchableOpacity
+              style={styles.menuItem}
+              onPress={() => switchViewMode("day")}
+            >
+              <Text>Day</Text>
+            </BWTouchableOpacity>
+            <BWTouchableOpacity
+              style={styles.menuItem}
+              onPress={() => switchViewMode("3days")}
+            >
+              <Text>3 Days</Text>
+            </BWTouchableOpacity>
+            <BWTouchableOpacity
+              style={styles.menuItem}
+              onPress={() => switchViewMode("month")}
+            >
+              <Text>Month</Text>
+            </BWTouchableOpacity>
+            <BWTouchableOpacity
+              style={styles.menuItem}
+              onPress={() => switchViewMode("schedule")}
+            >
+              <Text>Schedule</Text>
+            </BWTouchableOpacity>
+          </View>
+        </BWTouchableOpacity>
+      </GestureHandlerRootView>
     </Modal>
   );
 
