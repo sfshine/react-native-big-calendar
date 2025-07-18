@@ -10,7 +10,7 @@ import PagerView from "react-native-pager-view";
 
 type ViewMode = "day" | "3days";
 
-interface DayThreeDayCalendarPagerProps {
+interface DaysCalendarPagerProps {
   baseDate: Dayjs;
   allEvents: ICalendarEventBase[];
   currentPageIndex: number;
@@ -28,14 +28,14 @@ const getDatesInNextThreeDaysFixed = (date: Date): Dayjs[] => {
   return [day, day.add(1, "day"), day.add(2, "day")];
 };
 
-export default function DayThreeDayCalendarPager({
+export default function DaysCalendarPager({
   baseDate,
   allEvents,
   currentPageIndex,
   setCurrentPageIndex,
   pagerRef,
   viewMode,
-}: DayThreeDayCalendarPagerProps) {
+}: DaysCalendarPagerProps) {
   const { height } = useWindowDimensions();
 
   const pageCount = 20; // For day/3-day view
