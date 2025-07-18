@@ -78,7 +78,7 @@ const getDatesInNextThreeDaysFixed = (date: Date): Dayjs[] => {
 
 export default function CalendarManager() {
   const { height, width } = useWindowDimensions();
-  const [viewMode, setViewMode] = useState<ViewMode>("3days");
+  const [viewMode, setViewMode] = useState<ViewMode>("schedule");
   const [menuVisible, setMenuVisible] = useState(false);
   const [baseDate] = useState(dayjs());
   const [currentPageIndex, setCurrentPageIndex] = useState(10);
@@ -142,30 +142,30 @@ export default function CalendarManager() {
         onPress={() => setMenuVisible(false)}
       >
         <View style={[styles.menuContainer, { width: width * 0.6 }]}>
-          <TouchableOpacity
+          <Pressable
             style={styles.menuItem}
             onPress={() => switchViewMode("day")}
           >
             <Text>Day</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Pressable>
+          <Pressable
             style={styles.menuItem}
             onPress={() => switchViewMode("3days")}
           >
             <Text>3 Days</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Pressable>
+          <Pressable
             style={styles.menuItem}
             onPress={() => switchViewMode("month")}
           >
             <Text>Month</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Pressable>
+          <Pressable
             style={styles.menuItem}
             onPress={() => switchViewMode("schedule")}
           >
             <Text>Schedule</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </Pressable>
     </Modal>
