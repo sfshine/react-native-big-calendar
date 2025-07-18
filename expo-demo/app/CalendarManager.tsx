@@ -3,7 +3,6 @@ import dayjs, { Dayjs } from "dayjs";
 import React, { useMemo, useRef, useState } from "react";
 import {
   Modal,
-  Pressable,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -21,7 +20,8 @@ import {
 } from "react-native-big-calendar";
 import PagerView from "react-native-pager-view";
 import { events as eventList } from "../events";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BWTouchableOpacity } from "./BWTouchableOpacity";
 
 // Dummy events, can be shared
 const DUMMY_EVENTS: ICalendarEventBase[] = [
@@ -79,7 +79,7 @@ const getDatesInNextThreeDaysFixed = (date: Date): Dayjs[] => {
 export default function CalendarManager() {
   const { height, width } = useWindowDimensions();
   const [viewMode, setViewMode] = useState<ViewMode>("schedule");
-  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(true);
   const [baseDate] = useState(dayjs());
   const [currentPageIndex, setCurrentPageIndex] = useState(10);
   const pagerRef = useRef<PagerView>(null);
@@ -137,37 +137,39 @@ export default function CalendarManager() {
       animationType="fade"
       onRequestClose={() => setMenuVisible(false)}
     >
-      <Pressable
+      <BWTouchableOpacity
         style={styles.modalOverlay}
         onPress={() => setMenuVisible(false)}
       >
-        <View style={[styles.menuContainer, { width: width * 0.6 }]}>
-          <Pressable
+        <GestureHandlerRootView
+          style={[styles.menuContainer, { width: width * 0.6 }]}
+        >
+          <BWTouchableOpacity
             style={styles.menuItem}
             onPress={() => switchViewMode("day")}
           >
             <Text>Day</Text>
-          </Pressable>
-          <Pressable
+          </BWTouchableOpacity>
+          <BWTouchableOpacity
             style={styles.menuItem}
             onPress={() => switchViewMode("3days")}
           >
             <Text>3 Days</Text>
-          </Pressable>
-          <Pressable
+          </BWTouchableOpacity>
+          <BWTouchableOpacity
             style={styles.menuItem}
             onPress={() => switchViewMode("month")}
           >
             <Text>Month</Text>
-          </Pressable>
-          <Pressable
+          </BWTouchableOpacity>
+          <BWTouchableOpacity
             style={styles.menuItem}
             onPress={() => switchViewMode("schedule")}
           >
             <Text>Schedule</Text>
-          </Pressable>
-        </View>
-      </Pressable>
+          </BWTouchableOpacity>
+        </GestureHandlerRootView>
+      </BWTouchableOpacity>
     </Modal>
   );
 
@@ -325,22 +327,24 @@ export default function CalendarManager() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ThemeContext.Provider value={defaultTheme}>
-        <View style={styles.topHeader}>
-          <View style={{ width: 50 }} />
-          <Text style={styles.title}>Calendar</Text>
-          <TouchableOpacity
-            onPress={() => setMenuVisible(true)}
-            style={styles.menuButton}
-          >
-            <Ionicons name="menu" size={32} color="black" />
-          </TouchableOpacity>
-        </View>
-        {renderCalendar()}
-        {renderMenuView()}
-      </ThemeContext.Provider>
-    </SafeAreaView>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container}>
+        <ThemeContext.Provider value={defaultTheme}>
+          <View style={styles.topHeader}>
+            <View style={{ width: 50 }} />
+            <Text style={styles.title}>Calendar</Text>
+            <BWTouchableOpacity
+              onPress={() => setMenuVisible(true)}
+              style={styles.menuButton}
+            >
+              <Ionicons name="menu" size={32} color="black" />
+            </BWTouchableOpacity>
+          </View>
+          {renderCalendar()}
+          {renderMenuView()}
+        </ThemeContext.Provider>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
