@@ -10,19 +10,16 @@ import {
   View,
 } from "react-native";
 import {
-  CalendarBody,
-  CalendarBodyForMonthView,
-  CalendarHeader,
-  CalendarHeaderForMonthView,
   defaultTheme,
   ICalendarEventBase,
   Schedule,
   ThemeContext,
 } from "react-native-big-calendar";
-import PagerView from "react-native-pager-view";
 import { events as eventList } from "../events";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BWTouchableOpacity } from "./BWTouchableOpacity";
+import MonthCalendarPager from "./MonthCalendarPager";
+import DayThreeDayCalendarPager from "./DayThreeDayCalendarPager";
 
 // Dummy events, can be shared
 const DUMMY_EVENTS: ICalendarEventBase[] = [
@@ -67,53 +64,13 @@ const allEvents = [...DUMMY_EVENTS];
 
 type ViewMode = "day" | "3days" | "month" | "schedule";
 
-// A helper function for day view
-const getDatesInNextOneDay = (date: Date): Dayjs[] => {
-  return [dayjs(date)];
-};
-
-const getDatesInNextThreeDaysFixed = (date: Date): Dayjs[] => {
-  const day = dayjs(date);
-  return [day, day.add(1, "day"), day.add(2, "day")];
-};
-
 export default function CalendarManager() {
   const { height, width } = useWindowDimensions();
   const [viewMode, setViewMode] = useState<ViewMode>("schedule");
   const [menuVisible, setMenuVisible] = useState(true);
   const [baseDate] = useState(dayjs());
   const [currentPageIndex, setCurrentPageIndex] = useState(10);
-  const pagerRef = useRef<PagerView>(null);
-
-  const allDayEvents = useMemo(
-    () =>
-      allEvents.filter((event) => {
-        const start = dayjs(event.start);
-        const end = dayjs(event.end);
-        return (
-          start.hour() === 0 &&
-          start.minute() === 0 &&
-          end.hour() === 23 &&
-          end.minute() === 59
-        );
-      }),
-    []
-  );
-
-  const daytimeEvents = useMemo(
-    () =>
-      allEvents.filter((event) => {
-        const start = dayjs(event.start);
-        const end = dayjs(event.end);
-        return !(
-          start.hour() === 0 &&
-          start.minute() === 0 &&
-          end.hour() === 23 &&
-          end.minute() === 59
-        );
-      }),
-    []
-  );
+  const pagerRef = useRef(null);
 
   const onPageSelected = (event: any) => {
     const position = event.nativeEvent.position;
@@ -127,7 +84,7 @@ export default function CalendarManager() {
     if (mode !== "schedule") {
       const initialPage = mode === "month" ? 6 : 10;
       setCurrentPageIndex(initialPage);
-      pagerRef.current?.setPage(initialPage);
+      // pagerRef.current?.setPage(initialPage); // This line will be handled by the child components
     }
   };
 
@@ -174,26 +131,6 @@ export default function CalendarManager() {
     </Modal>
   );
 
-  const formatDateRange = (startDate: Dayjs, endDate: Dayjs) => {
-    if (viewMode === "day") {
-      return startDate.format("MMM DD, YYYY");
-    }
-    const isSameMonth = startDate.month() === endDate.month();
-    const isSameYear = startDate.year() === endDate.year();
-
-    if (isSameMonth && isSameYear) {
-      return `${startDate.format("MMM DD")} - ${endDate.format("DD, YYYY")}`;
-    } else if (isSameYear) {
-      return `${startDate.format("MMM DD")} - ${endDate.format(
-        "MMM DD, YYYY"
-      )}`;
-    } else {
-      return `${startDate.format("MMM DD, YYYY")} - ${endDate.format(
-        "MMM DD, YYYY"
-      )}`;
-    }
-  };
-
   const renderCalendar = () => {
     if (viewMode === "schedule") {
       return (
@@ -212,147 +149,27 @@ export default function CalendarManager() {
       );
     }
 
-    const pageCount = viewMode === "month" ? 12 : 20;
-    const initialPage = viewMode === "month" ? 6 : 10;
-
-    const pages = Array.from({ length: pageCount }, (_, index) => {
-      let pageDate;
-      if (viewMode === "day") {
-        pageDate = baseDate.add(index - initialPage, "day");
-      } else if (viewMode === "3days") {
-        pageDate = baseDate.add((index - initialPage) * 3, "day");
-      } else {
-        // month
-        pageDate = baseDate.add(index - initialPage, "month");
-      }
-      return { key: index, date: pageDate };
-    });
-
     if (viewMode === "month") {
-      const currentDisplayDate = baseDate.add(currentPageIndex - 6, "month");
-      
-      // Helper function to get dates in month (similar to CalendarContainer)
-      const getDatesInMonth = (date: Dayjs): Dayjs[] => {
-        const startOfMonth = date.startOf('month');
-        const endOfMonth = date.endOf('month');
-        const startOfCalendar = startOfMonth.startOf('week');
-        const endOfCalendar = endOfMonth.endOf('week');
-        
-        const dates: Dayjs[] = [];
-        let current = startOfCalendar;
-        
-        while (current.isBefore(endOfCalendar) || current.isSame(endOfCalendar, 'day')) {
-          dates.push(current);
-          current = current.add(1, 'day');
-        }
-        
-        return dates;
-      };
-      
       return (
-        <>
-          <Text style={styles.header}>
-            {currentDisplayDate.format("MMMM YYYY")}
-          </Text>
-          <PagerView
-            ref={pagerRef}
-            style={styles.pagerView}
-            initialPage={6}
-            onPageSelected={onPageSelected}
-          >
-            {pages.map((page) => (
-              <View key={page.key} style={styles.pageContainer}>
-                <CalendarHeaderForMonthView
-                  dateRange={getDatesInMonth(page.date)}
-                  style={styles.headerComponent}
-                  locale="en"
-                  weekStartsOn={0}
-                  showWeekNumber={false}
-                  weekNumberPrefix=""
-                  headerContainerAccessibilityProps={{}}
-                  headerCellAccessibilityProps={{}}
-                />
-                <CalendarBodyForMonthView
-                  containerHeight={height - 220} // Adjusted for header
-                  targetDate={page.date}
-                  events={allEvents}
-                  style={styles.calendarBody}
-                  maxVisibleEventCount={3}
-                  weekStartsOn={0} // Sunday
-                  eventMinHeightForMonthView={20}
-                  moreLabel={"{moreCount} More"}
-                  showAdjacentMonths={true}
-                  sortedMonthView={true}
-                />
-              </View>
-            ))}
-          </PagerView>
-        </>
+        <MonthCalendarPager
+          baseDate={baseDate}
+          allEvents={allEvents}
+          currentPageIndex={currentPageIndex}
+          setCurrentPageIndex={setCurrentPageIndex}
+          pagerRef={pagerRef}
+        />
       );
     }
 
-    const offset =
-      viewMode === "day" ? currentPageIndex - 10 : (currentPageIndex - 10) * 3;
-    const currentDisplayDate = baseDate.add(offset, "day");
-    const endDate =
-      viewMode === "day"
-        ? currentDisplayDate
-        : currentDisplayDate.add(2, "day");
-
-    const cellHeight = 60;
-    const containerHeight = height - 220;
-    const scrollOffsetMinutes = 480; // 8:00 AM
-
     return (
-      <>
-        <Text style={styles.header}>
-          {formatDateRange(currentDisplayDate, endDate)}
-        </Text>
-        <Text style={styles.subHeader}>
-          {viewMode === "day" ? "Day View" : "3 Days View"}
-        </Text>
-        <PagerView
-          ref={pagerRef}
-          style={styles.pagerView}
-          initialPage={10}
-          onPageSelected={onPageSelected}
-        >
-          {pages.map((page) => {
-            const dateRange: Dayjs[] =
-              viewMode === "day"
-                ? getDatesInNextOneDay(page.date.toDate())
-                : getDatesInNextThreeDaysFixed(page.date.toDate());
-
-            return (
-              <View key={page.key} style={styles.pageContainer}>
-                <CalendarHeader
-                  dateRange={dateRange}
-                  cellHeight={cellHeight}
-                  locale="en"
-                  style={styles.headerComponent}
-                  allDayEvents={allDayEvents}
-                  showAllDayEventCell={true}
-                  allDayEventCellStyle={{}}
-                  allDayEventCellTextColor=""
-                />
-                <CalendarBody
-                  cellHeight={cellHeight}
-                  containerHeight={containerHeight}
-                  dateRange={dateRange}
-                  events={daytimeEvents}
-                  scrollOffsetMinutes={scrollOffsetMinutes}
-                  ampm={false}
-                  showTime={true}
-                  style={styles.calendarBody}
-                  hideNowIndicator={false}
-                  overlapOffset={20}
-                  isEventOrderingEnabled={true}
-                />
-              </View>
-            );
-          })}
-        </PagerView>
-      </>
+      <DayThreeDayCalendarPager
+        baseDate={baseDate}
+        allEvents={allEvents}
+        currentPageIndex={currentPageIndex}
+        setCurrentPageIndex={setCurrentPageIndex}
+        pagerRef={pagerRef}
+        viewMode={viewMode as "day" | "3days"}
+      />
     );
   };
 
@@ -411,32 +228,5 @@ const styles = StyleSheet.create({
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
-  },
-  header: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 5,
-    color: "#333",
-    textAlign: "center",
-    paddingTop: 10,
-  },
-  subHeader: {
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  pagerView: {
-    flex: 1,
-    width: "100%",
-  },
-  pageContainer: {
-    flex: 1,
-  },
-  calendarBody: {
-    flex: 1,
-  },
-  headerComponent: {
-    backgroundColor: "#f5f5f5",
   },
 });
