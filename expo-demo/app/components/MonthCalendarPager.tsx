@@ -1,5 +1,5 @@
 import dayjs, { Dayjs } from "dayjs";
-import React, { useRef, useState, useMemo } from "react";
+import React, { useRef, useState, useMemo, memo } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import {
   CalendarBodyForMonthView,
@@ -33,7 +33,7 @@ const getDatesInMonth = (date: Dayjs): Dayjs[] => {
   return dates;
 };
 
-export default function MonthCalendarPager({
+export default memo(function MonthCalendarPager({
   baseDate,
   allEvents,
   currentPageIndex,
@@ -99,7 +99,7 @@ export default function MonthCalendarPager({
       </PagerView>
     </>
   );
-}
+});
 
 const styles = StyleSheet.create({
   header: {

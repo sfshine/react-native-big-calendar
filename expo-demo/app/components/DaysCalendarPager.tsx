@@ -1,5 +1,5 @@
 import dayjs, { Dayjs } from "dayjs";
-import React, { useRef, useState, useMemo } from "react";
+import React, { useRef, useState, useMemo, memo } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import {
   CalendarBody,
@@ -28,7 +28,7 @@ const getDatesInNextThreeDaysFixed = (date: Date): Dayjs[] => {
   return [day, day.add(1, "day"), day.add(2, "day")];
 };
 
-export default function DaysCalendarPager({
+export default memo(function DaysCalendarPager({
   baseDate,
   allEvents,
   currentPageIndex,
@@ -172,7 +172,7 @@ export default function DaysCalendarPager({
       </PagerView>
     </>
   );
-}
+});
 
 const styles = StyleSheet.create({
   header: {
