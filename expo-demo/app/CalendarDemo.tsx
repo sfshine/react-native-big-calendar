@@ -49,16 +49,6 @@ export default function CalendarDemo() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View>
         <SafeAreaView>
-          {/* Navigation Links */}
-          <View style={styles.navigationContainer}>
-            <Link href="/MonthViewTestPage" style={styles.navButton}>
-              <Text style={styles.navButtonText}>Infinite Pager Test</Text>
-            </Link>
-            <Link href="/MonthViewPagerPage" style={styles.navButton}>
-              <Text style={styles.navButtonText}>Pager View Test</Text>
-            </Link>
-          </View>
-
           <Text style={styles.headline}>Calendar Mode</Text>
           <ScrollView horizontal={true} style={{ flexGrow: 0 }}>
             <View style={styles.buttonRow}>
