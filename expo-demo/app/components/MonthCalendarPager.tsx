@@ -2,10 +2,10 @@ import dayjs, { Dayjs } from "dayjs";
 import React, { useRef, useState, useMemo, memo } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import {
-  CalendarBodyForMonthView,
   CalendarHeaderForMonthView,
   ICalendarEventBase,
 } from "react-native-big-calendar";
+import { CalendarBodyForMonthView } from "./CalendarBodyForMonthView";
 import PagerView from "react-native-pager-view";
 
 interface MonthCalendarPagerProps {

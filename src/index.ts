@@ -7,6 +7,8 @@ dayjs.extend(duration)
 dayjs.extend(isBetween)
 dayjs.extend(isoWeek)
 
+export { default as dayjs } from 'dayjs';
+
 export * from './commonStyles'
 export * from './components/Calendar'
 export * from './components/CalendarBody'
