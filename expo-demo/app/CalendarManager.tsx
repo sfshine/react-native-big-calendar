@@ -18,8 +18,8 @@ import {
 import { events as eventList } from "../events";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BWTouchableOpacity } from "./BWTouchableOpacity";
-import MonthCalendarPager from "./MonthCalendarPager";
-import DayThreeDayCalendarPager from "./DayThreeDayCalendarPager";
+import MonthCalendarPager from "./components/MonthCalendarPager";
+import DayThreeDayCalendarPager from "./components/DayThreeDayCalendarPager";
 
 // Dummy events, can be shared
 const DUMMY_EVENTS: ICalendarEventBase[] = [
