@@ -11,6 +11,7 @@ export default function RootLayout() {
         <Stack.Screen name="ThreeDaysViewPagerPage" options={{ headerShown: false }} />
         <Stack.Screen name="MonthViewInfinitePagerTest" options={{ headerShown: false }} />
         <Stack.Screen name="CalendarManager" options={{ headerShown: false }} />
+        <Stack.Screen name="expandlbe/components/MonthView" options={{ headerShown: false }} />
       </Stack>
     </GestureHandlerRootView>
   )

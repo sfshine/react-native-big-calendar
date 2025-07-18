@@ -22,6 +22,10 @@ const EXAMPLES = [
     name: 'Month view infinite pager',
     path: 'MonthViewInfinitePagerTest',
   },
+  {
+    name: 'Month View (对比)',
+    path: 'expandlbe/components/MonthView',
+  },
 ]
 
 export default function App() {
