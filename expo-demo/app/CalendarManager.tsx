@@ -25,6 +25,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BWTouchableOpacity } from "./BWTouchableOpacity";
 import MonthCalendarPager from "./components/MonthCalendarPager";
 import DaysCalendarPager from "./components/DaysCalendarPager";
+import { fail } from "node:assert";
 
 // Dummy events, can be shared
 const DUMMY_EVENTS: ICalendarEventBase[] = [
@@ -65,22 +66,25 @@ const DUMMY_EVENTS: ICalendarEventBase[] = [
   },
 ];
 
-const allEvents = [...DUMMY_EVENTS];
+const allEvents = [...DUMMY_EVENTS, ...eventList];
 
 type ViewMode = "day" | "3days" | "month" | "schedule";
 
 export default function CalendarManager() {
   const { height, width } = useWindowDimensions();
-  const [viewMode, setViewMode] = useState<ViewMode>("schedule");
-  const [menuVisible, setMenuVisible] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>("month");
+  const [menuVisible, setMenuVisible] = useState(false);
   const [baseDate] = useState(dayjs());
   const [currentPageIndex, setCurrentPageIndex] = useState(10);
   const pagerRef = useRef(null);
 
   useEffect(() => {
     const isFabricEnabled = !!global.nativeFabricUIManager;
-    console.log('Is Fabric Enabled (via global.nativeFabricUIManager):', isFabricEnabled);
-    console.log('React Native Version:', Platform.constants.reactNativeVersion);
+    console.log(
+      "Is Fabric Enabled (via global.nativeFabricUIManager):",
+      isFabricEnabled
+    );
+    console.log("React Native Version:", Platform.constants.reactNativeVersion);
   }, []);
 
   const onPageSelected = (event: any) => {
