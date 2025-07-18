@@ -107,96 +107,115 @@ function _CalendarBody<T extends ICalendarEventBase>({
   timeslots = 0,
   hourComponent,
 }: CalendarBodyProps<T>) {
-  const scrollView = React.useRef<ScrollView>(null)
-  const { now } = useNow(!hideNowIndicator)
-  const hours = Array.from({ length: maxHour - minHour + 1 }, (_, i) => minHour + i)
+  console.log('CalendarBody: Render start');
+  const renderStartTime = performance.now();
+
+  const scrollView = React.useRef<ScrollView>(null);
+  const { now } = useNow(!hideNowIndicator);
+  const hours = React.useMemo(() => {
+    console.log('CalendarBody: Recalculating hours');
+    return Array.from({ length: maxHour - minHour + 1 }, (_, i) => minHour + i);
+  }, [maxHour, minHour]);
 
   React.useEffect(() => {
-    let timeout: NodeJS.Timeout
+    console.log('CalendarBody: useEffect for scrollOffsetMinutes triggered');
+    let timeout: NodeJS.Timeout;
     if (scrollView.current && scrollOffsetMinutes && Platform.OS !== 'ios') {
       // We add delay here to work correct on React Native
       // see: https://stackoverflow.com/questions/33208477/react-native-android-scrollview-scrollto-not-working
       timeout = setTimeout(
         () => {
           if (scrollView?.current) {
+            console.log(`CalendarBody: Scrolling to y: ${(cellHeight * scrollOffsetMinutes) / 60}`);
             scrollView.current.scrollTo({
               y: (cellHeight * scrollOffsetMinutes) / 60,
               animated: false,
-            })
+            });
           }
         },
         Platform.OS === 'web' ? 0 : 10,
-      )
+      );
     }
     return () => {
       if (timeout) {
-        clearTimeout(timeout)
+        clearTimeout(timeout);
       }
-    }
-  }, [scrollOffsetMinutes, cellHeight])
+    };
+  }, [scrollOffsetMinutes, cellHeight]);
 
   const _onPressCell = React.useCallback(
     (date: dayjs.Dayjs) => {
-      onPressCell?.(date.toDate())
+      console.log('CalendarBody: _onPressCell called for date:', date.toDate());
+      onPressCell?.(date.toDate());
     },
     [onPressCell],
-  )
+  );
 
   const _onLongPressCell = React.useCallback(
     (date: dayjs.Dayjs) => {
-      onLongPressCell?.(date.toDate())
+      console.log('CalendarBody: _onLongPressCell called for date:', date.toDate());
+      onLongPressCell?.(date.toDate());
     },
     [onLongPressCell],
-  )
+  );
 
   const enrichedEvents = React.useMemo(() => {
+    console.log('CalendarBody: Recalculating enrichedEvents');
+    const enrichedEventsStartTime = performance.now();
     if (isEventOrderingEnabled) {
       // Events are being sorted once so we dont have to do it on each loop
-      const sortedEvents = events.sort((a, b) => a.start.getDate() - b.start.getDate())
-      return sortedEvents.map((event) => ({
+      const sortedEvents = events.sort((a, b) => a.start.getDate() - b.start.getDate());
+      const result = sortedEvents.map((event) => ({
         ...event,
         overlapPosition: getOrderOfEvent(event, sortedEvents),
         overlapCount: getCountOfEventsAtEvent(event, sortedEvents),
-      }))
+      }));
+      console.log(`CalendarBody: enrichedEvents calculation took ${performance.now() - enrichedEventsStartTime} ms`);
+      return result;
     }
 
-    return events
-  }, [events, isEventOrderingEnabled])
+    console.log(`CalendarBody: enrichedEvents calculation took ${performance.now() - enrichedEventsStartTime} ms`);
+    return events;
+  }, [events, isEventOrderingEnabled]);
 
   const eventsByDateMap = React.useMemo(() => {
-    const map: Record<string, T[]> = {}
+    console.log('CalendarBody: Recalculating eventsByDateMap');
+    const eventsByDateMapStartTime = performance.now();
+    const map: Record<string, T[]> = {};
     enrichedEvents.forEach((event) => {
-      const startDate = dayjs(event.start).format(SIMPLE_DATE_FORMAT)
-      const endDate = dayjs(event.end).format(SIMPLE_DATE_FORMAT)
+      const startDate = dayjs(event.start).format(SIMPLE_DATE_FORMAT);
+      const endDate = dayjs(event.end).format(SIMPLE_DATE_FORMAT);
 
       // Handle single-day events
       if (startDate === endDate) {
         if (!map[startDate]) {
-          map[startDate] = []
+          map[startDate] = [];
         }
-        map[startDate].push(event)
+        map[startDate].push(event);
       } else {
         // Handle multi-day events
-        let currentDate = dayjs(event.start).startOf('day')
+        let currentDate = dayjs(event.start).startOf('day');
         while (currentDate.isBefore(dayjs(event.end).endOf('day'))) {
-          const formattedDate = currentDate.format(SIMPLE_DATE_FORMAT)
+          const formattedDate = currentDate.format(SIMPLE_DATE_FORMAT);
           if (!map[formattedDate]) {
-            map[formattedDate] = []
+            map[formattedDate] = [];
           }
           map[formattedDate].push({
             ...event,
             start: currentDate.toDate(),
             end: currentDate.endOf('day').toDate(),
-          })
-          currentDate = currentDate.add(1, 'day')
+          });
+          currentDate = currentDate.add(1, 'day');
         }
       }
-    })
-    return map
-  }, [enrichedEvents])
+    });
+    console.log(`CalendarBody: eventsByDateMap calculation took ${performance.now() - eventsByDateMapStartTime} ms`);
+    return map;
+  }, [enrichedEvents]);
 
   const _renderMappedEvent = React.useCallback(
     (event: T, index: number) => {
+      console.log('CalendarBody: _renderMappedEvent called for event:', event.title);
       return (
         <CalendarEvent
           key={`${index}${event.start}${event.title}${event.end}`}
@@ -215,7 +234,7 @@ function _CalendarBody<T extends ICalendarEventBase>({
           minHour={minHour}
           hours={hours.length}
         />
-      )
+      );
     },
     [
       ampm,
@@ -230,14 +249,15 @@ function _CalendarBody<T extends ICalendarEventBase>({
       minHour,
       hours.length,
     ],
-  )
+  );
 
   const _renderEvents = React.useCallback(
     (date: dayjs.Dayjs) => {
-      return (eventsByDateMap[date.format(SIMPLE_DATE_FORMAT)] || []).map(_renderMappedEvent)
+      console.log('CalendarBody: _renderEvents called for date:', date.format(SIMPLE_DATE_FORMAT));
+      return (eventsByDateMap[date.format(SIMPLE_DATE_FORMAT)] || []).map(_renderMappedEvent);
     },
     [_renderMappedEvent, eventsByDateMap],
-  )
+  );
 
   const theme = useTheme()
 
@@ -314,7 +334,11 @@ function _CalendarBody<T extends ICalendarEventBase>({
         </View>
       </ScrollView>
     </React.Fragment>
-  )
+  );
+
+  React.useEffect(() => {
+    console.log(`CalendarBody: Total render time: ${performance.now() - renderStartTime} ms`);
+  });
 }
 
 export const CalendarBody = typedMemo(_CalendarBody)

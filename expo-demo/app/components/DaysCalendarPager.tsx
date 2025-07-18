@@ -73,14 +73,18 @@ export default memo(function DaysCalendarPager({
 
   const pages = useMemo(() => {
     return Array.from({ length: pageCount }, (_, index) => {
-      let pageDate;
+      let pageDate: Dayjs;
       if (viewMode === "day") {
         pageDate = baseDate.add(index - initialPage, "day");
       } else {
         // 3days
         pageDate = baseDate.add((index - initialPage) * 3, "day");
       }
-      return { key: index, date: pageDate };
+      const dateRange =
+        viewMode === "day"
+          ? getDatesInNextOneDay(pageDate.toDate())
+          : getDatesInNextThreeDaysFixed(pageDate.toDate());
+      return { key: index, date: pageDate, dateRange };
     });
   }, [baseDate, pageCount, initialPage, viewMode]);
 
@@ -136,10 +140,7 @@ export default memo(function DaysCalendarPager({
         onPageSelected={onPageSelected}
       >
         {pages.map((page) => {
-          const dateRange: Dayjs[] =
-            viewMode === "day"
-              ? getDatesInNextOneDay(page.date.toDate())
-              : getDatesInNextThreeDaysFixed(page.date.toDate());
+          const dateRange: Dayjs[] = page.dateRange;
 
           return (
             <View key={page.key} style={styles.pageContainer}>
