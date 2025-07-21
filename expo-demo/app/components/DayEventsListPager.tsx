@@ -29,6 +29,10 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   const currentPageIndex = React.useRef<number | null>(null);
   // 添加标志位来防止程序化页面切换时触发不必要的回调
   const isSettingPageProgrammatically = React.useRef(false);
+  // 添加标志位来跟踪 PagerView 是否已经完成布局
+  const isPagerLayoutReady = React.useRef(false);
+  // 存储待执行的页面索引
+  const pendingPageIndex = React.useRef<number | null>(null);
 
   // 找到当前选中日期在这一周中的索引
   const selectedIndex = React.useMemo(
@@ -36,23 +40,74 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
     [weekDates, selectedDate]
   );
 
+  // 只在组件首次挂载或weekDates变化时计算 initialPage，避免频繁重复初始化
+  const initialPage = React.useMemo(() => {
+    const index = weekDates.findIndex((date) =>
+      date.isSame(selectedDate, "day")
+    );
+    return index >= 0 ? index : 0;
+  }, [weekDates]); // 只依赖 weekDates，避免因 selectedDate 频繁变化导致的重新初始化
+
   console.log("selectedIndex", selectedIndex);
+
+  // PagerView 布局完成的回调
+  const handlePagerLayout = React.useCallback(() => {
+    isPagerLayoutReady.current = true;
+
+    // 如果有待执行的页面索引，使用双重延迟确保稳定性
+    if (pendingPageIndex.current !== null && pagerRef.current) {
+      const targetIndex = pendingPageIndex.current;
+      pendingPageIndex.current = null;
+
+      // 使用 requestAnimationFrame + setTimeout 的组合确保 PagerView 完全稳定
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          // 再次确认 ref 仍然有效
+          if (pagerRef.current) {
+            isSettingPageProgrammatically.current = true;
+            pagerRef.current.setPageWithoutAnimation(targetIndex);
+            console.log(
+              "setPage:selectedIndex (after layout + RAF + timeout)",
+              targetIndex
+            );
+          }
+        }, 100); // 100ms 延迟确保 PagerView 完全稳定
+      });
+    }
+  }, []);
+
+  // 页面滚动结束时的回调
+  const handlePageScrollStateChanged = React.useCallback((e: any) => {
+    const state = e.nativeEvent.pageScrollState;
+    // 当页面滚动结束时，重置程序化设置标志位
+    if (state === "idle") {
+      isSettingPageProgrammatically.current = false;
+      console.log("Page scroll ended, reset programmatic flag");
+    }
+  }, []);
+
   // 当选中日期改变时，切换到对应的页面
   React.useEffect(() => {
-    if (
-      selectedIndex >= 0 &&
-      pagerRef.current &&
-      selectedIndex !== currentPageIndex.current
-    ) {
-      // 设置标志位，表明这是程序化的页面切换
-      isSettingPageProgrammatically.current = true;
-      pagerRef.current.setPage(selectedIndex);
-      console.log("setPage:selectedIndex", selectedIndex);
-
-      // 使用timeout来重置标志位，给足够时间让页面切换完成
-      setTimeout(() => {
-        isSettingPageProgrammatically.current = false;
-      }, 300);
+    if (selectedIndex >= 0 && selectedIndex !== currentPageIndex.current) {
+      if (isPagerLayoutReady.current && pagerRef.current) {
+        // PagerView 已经准备好，使用双重延迟确保稳定性
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            if (pagerRef.current) {
+              isSettingPageProgrammatically.current = true;
+              pagerRef.current.setPageWithoutAnimation(selectedIndex);
+              console.log(
+                "setPage:selectedIndex (immediate + RAF + timeout)",
+                selectedIndex
+              );
+            }
+          }, 100); // 100ms 延迟确保 PagerView 完全稳定
+        });
+      } else {
+        // PagerView 还没准备好，存储待执行的索引
+        pendingPageIndex.current = selectedIndex;
+        console.log("setPage:selectedIndex (pending)", selectedIndex);
+      }
     }
   }, [selectedIndex]);
 
@@ -123,8 +178,10 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
       <PagerView
         ref={pagerRef}
         style={{ flex: 1 }}
-        initialPage={selectedIndex >= 0 ? selectedIndex : 0}
+        initialPage={initialPage}
         onPageSelected={handlePageSelected}
+        onLayout={handlePagerLayout}
+        onPageScrollStateChanged={handlePageScrollStateChanged}
       >
         {weekDates.map((date, index) => (
           <View key={date.format("YYYY-MM-DD")} style={{ flex: 1 }}>
