@@ -104,6 +104,7 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
       <PagerView
         ref={pagerRef}
         style={{ flex: 1 }}
+        initialPage={selectedIndex >= 0 ? selectedIndex : 0}
         onPageSelected={handlePageSelected}
       >
         {weekDates.map((date, index) => (
