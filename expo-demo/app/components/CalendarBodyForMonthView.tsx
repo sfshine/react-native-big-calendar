@@ -30,6 +30,7 @@ import {
 import { styles } from "./CalendarBodyForMonthView.styles";
 import { CalendarEventForMonthView } from "./CalendarEventForMonthView";
 import { DayEventsList } from "./DayEventsList";
+import { DayEventsListPager } from "./DayEventsListPager";
 
 dayjs.extend(duration);
 dayjs.extend(isoWeek);
@@ -138,6 +139,37 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
       setExpandedWeek(weekIndex);
     }
   };
+
+  const handleDateChange = (newDate: dayjs.Dayjs) => {
+    setSelectedDate(newDate);
+  };
+
+  // 计算展开周的所有日期
+  const weekDates = React.useMemo(() => {
+    if (expandedWeek === null) return [];
+    
+    const week = weeks[expandedWeek];
+    if (showAdjacentMonths) {
+      // 处理相邻月份的日期
+      return week.map((d) => {
+        if (d <= 0) {
+          // 前一个月的日期
+          return targetDate.add(-1, 'month').endOf('month').add(d, 'day');
+        } else if (d > targetDate.daysInMonth()) {
+          // 下一个月的日期
+          return targetDate.add(1, 'month').date(d - targetDate.daysInMonth());
+        } else {
+          // 当前月的日期
+          return targetDate.date(d);
+        }
+      });
+    } else {
+      // 不显示相邻月份时，只显示当前月份的日期
+      return week
+        .map((d) => d > 0 && d <= targetDate.daysInMonth() ? targetDate.date(d) : null)
+        .filter((date): date is dayjs.Dayjs => date !== null);
+    }
+  }, [expandedWeek, weeks, targetDate, showAdjacentMonths]);
 
   const sortedEvents = React.useCallback(
     (day: dayjs.Dayjs) => {
@@ -439,17 +471,19 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           </React.Fragment>
         );
 
-        if (selectedDate) {
+        if (selectedDate && weekDates.length > 0) {
           const isLastWeek = expandedWeek === weeks.length - 1;
           const eventListHeight = isLastWeek
             ? cellHeight * (weeks.length - 1)
             : cellHeight * (weeks.length - 2);
           elements.push(
-            <DayEventsList
-              key="day-events-list"
+            <DayEventsListPager
+              key="day-events-list-pager"
               events={events}
               selectedDate={selectedDate}
+              weekDates={weekDates}
               onPressEvent={onPressEvent}
+              onDateChange={handleDateChange}
               style={{ height: eventListHeight }}
             />
           );
