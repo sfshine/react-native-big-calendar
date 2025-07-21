@@ -127,6 +127,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   pagerView: {
+    backgroundColor: "blue",
     flex: 1,
     width: "100%",
   },
