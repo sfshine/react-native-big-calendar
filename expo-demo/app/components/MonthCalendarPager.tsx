@@ -99,7 +99,6 @@ export default memo(function MonthCalendarPager({
                 headerCellAccessibilityProps={{}}
               />
               <CalendarBodyForMonthView
-                containerHeight={height} // Adjusted for header
                 targetDate={page.date}
                 events={allEvents}
                 style={styles.calendarBody}

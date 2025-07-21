@@ -36,7 +36,6 @@ dayjs.extend(duration);
 dayjs.extend(isoWeek);
 
 interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
-  containerHeight: number;
   targetDate: dayjs.Dayjs;
   events: T[];
   style: ViewStyle;
@@ -66,7 +65,6 @@ interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
 }
 
 function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
-  containerHeight,
   targetDate,
   style,
   onLongPressCell,
@@ -104,8 +102,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   const weeks = showAdjacentMonths
     ? getWeeksWithAdjacentMonths(targetDate, weekStartsOn)
     : calendarize(targetDate.toDate(), weekStartsOn);
-
-  const cellHeight = weeks.length > 0 ? containerHeight / weeks.length : 0;
 
   const getCalendarCellStyle = React.useMemo(
     () =>
@@ -147,17 +143,17 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   // 计算展开周的所有日期
   const weekDates = React.useMemo(() => {
     if (expandedWeek === null) return [];
-    
+
     const week = weeks[expandedWeek];
     if (showAdjacentMonths) {
       // 处理相邻月份的日期
       return week.map((d) => {
         if (d <= 0) {
           // 前一个月的日期
-          return targetDate.add(-1, 'month').endOf('month').add(d, 'day');
+          return targetDate.add(-1, "month").endOf("month").add(d, "day");
         } else if (d > targetDate.daysInMonth()) {
           // 下一个月的日期
-          return targetDate.add(1, 'month').date(d - targetDate.daysInMonth());
+          return targetDate.add(1, "month").date(d - targetDate.daysInMonth());
         } else {
           // 当前月的日期
           return targetDate.date(d);
@@ -166,7 +162,9 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     } else {
       // 不显示相邻月份时，只显示当前月份的日期
       return week
-        .map((d) => d > 0 && d <= targetDate.daysInMonth() ? targetDate.date(d) : null)
+        .map((d) =>
+          d > 0 && d <= targetDate.daysInMonth() ? targetDate.date(d) : null
+        )
         .filter((date): date is dayjs.Dayjs => date !== null);
     }
   }, [expandedWeek, weeks, targetDate, showAdjacentMonths]);
@@ -313,17 +311,12 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
         style={[
           styles.weekRow,
           Platform.OS === "android" && style, // TODO: in Android, backgroundColor is not applied to child components
-          { height: cellHeight },
           { backgroundColor: "red" },
         ]}
       >
         {showWeekNumber ? (
           <View
-            style={[
-              styles.weekNumberContainer,
-              i > 0 && { borderTopWidth: 1 },
-              { height: cellHeight },
-            ]}
+            style={[styles.weekNumberContainer, i > 0 && { borderTopWidth: 1 }]}
             key={"weekNumber"}
             {...calendarCellAccessibilityProps}
           >
@@ -359,18 +352,16 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   styles.dateCell,
                   i > 0 && { borderTopWidth: 1 },
                   (ii > 0 || showWeekNumber) && { borderLeftWidth: 1 },
-                  { height: cellHeight },
                   getCalendarCellStyle(date?.toDate(), i),
                   isCellSelected && { backgroundColor: "rgba(0,0,0,0.1)" },
                 ]}
                 key={`${ii}-${date?.toDate()}`}
                 onLayout={({ nativeEvent: { layout } }) =>
                   // Only set calendarCellHeight once because they are all same
-                  // Only set calendarCellHeight if disableMonthEventCellPress is true, since calendarCellHeihgt is only used when disableMonthEventCellPress is true
                   i === 0 &&
                   ii === 0 &&
-                  disableMonthEventCellPress &&
-                  setCalendarCellHeight(layout.height)
+                  setCalendarCellHeight(layout.height) &&
+                  console.log("layout.height", layout.height)
                 }
                 {...calendarCellAccessibilityPropsForMonthView}
               >
@@ -449,7 +440,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
 
   return (
     <View
-      style={[styles.container, { height: containerHeight }, style]}
+      style={[styles.container, style]}
       onLayout={({ nativeEvent: { layout } }) => {
         setCalendarWidth(layout.width);
       }}
@@ -475,8 +466,10 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
         if (selectedDate && weekDates.length > 0) {
           const isLastWeek = expandedWeek === weeks.length - 1;
           const eventListHeight = isLastWeek
-            ? cellHeight * (weeks.length - 1)
-            : cellHeight * (weeks.length - 2);
+            ? calendarCellHeight * (weeks.length - 1)
+            : calendarCellHeight * (weeks.length - 2);
+          console.log("eventListHeight", eventListHeight);
+          console.log("calendarCellHeight", calendarCellHeight);
           elements.push(
             <DayEventsListPager
               key="day-events-list-pager"
