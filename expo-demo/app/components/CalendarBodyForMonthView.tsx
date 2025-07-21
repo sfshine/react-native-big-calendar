@@ -314,6 +314,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           styles.weekRow,
           Platform.OS === "android" && style, // TODO: in Android, backgroundColor is not applied to child components
           { height: cellHeight },
+          { backgroundColor: "red" },
         ]}
       >
         {showWeekNumber ? (

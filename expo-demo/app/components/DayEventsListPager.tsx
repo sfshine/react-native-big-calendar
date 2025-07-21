@@ -26,10 +26,10 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   style,
 }: DayEventsListPagerProps<T>) {
   const pagerRef = React.useRef<PagerView>(null);
-  
+
   // 找到当前选中日期在这一周中的索引
   const selectedIndex = React.useMemo(
-    () => weekDates.findIndex(date => date.isSame(selectedDate, 'day')),
+    () => weekDates.findIndex((date) => date.isSame(selectedDate, "day")),
     [weekDates, selectedDate]
   );
 
@@ -61,7 +61,8 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
       <View style={styles.eventItem}>
         <Text style={styles.eventTitle}>{item.title}</Text>
         <Text style={styles.eventTime}>
-          {dayjs(item.start).format("HH:mm")} - {dayjs(item.end).format("HH:mm")}
+          {dayjs(item.start).format("HH:mm")} -{" "}
+          {dayjs(item.end).format("HH:mm")}
         </Text>
       </View>
     );
@@ -86,7 +87,7 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   };
 
   return (
-    <View style={[{ backgroundColor: "#f5f5f5" }, style]}>
+    <View style={[style, { backgroundColor: "green" }]}>
       <PagerView
         ref={pagerRef}
         style={{ flex: 1 }}
@@ -101,4 +102,4 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
       </PagerView>
     </View>
   );
-} 
+}

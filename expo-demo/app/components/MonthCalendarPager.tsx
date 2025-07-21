@@ -17,19 +17,22 @@ interface MonthCalendarPagerProps {
 }
 
 const getDatesInMonth = (date: Dayjs): Dayjs[] => {
-  const startOfMonth = date.startOf('month');
-  const endOfMonth = date.endOf('month');
-  const startOfCalendar = startOfMonth.startOf('week');
-  const endOfCalendar = endOfMonth.endOf('week');
-  
+  const startOfMonth = date.startOf("month");
+  const endOfMonth = date.endOf("month");
+  const startOfCalendar = startOfMonth.startOf("week");
+  const endOfCalendar = endOfMonth.endOf("week");
+
   const dates: Dayjs[] = [];
   let current = startOfCalendar;
-  
-  while (current.isBefore(endOfCalendar) || current.isSame(endOfCalendar, 'day')) {
+
+  while (
+    current.isBefore(endOfCalendar) ||
+    current.isSame(endOfCalendar, "day")
+  ) {
     dates.push(current);
-    current = current.add(1, 'day');
+    current = current.add(1, "day");
   }
-  
+
   return dates;
 };
 
@@ -53,7 +56,10 @@ export default memo(function MonthCalendarPager({
     });
   }, [baseDate, pageCount, initialPage]);
 
-  const currentDisplayDate = baseDate.add(currentPageIndex - initialPage, "month");
+  const currentDisplayDate = baseDate.add(
+    currentPageIndex - initialPage,
+    "month"
+  );
 
   const onPageSelected = (event: any) => {
     const position = event.nativeEvent.position;
@@ -93,7 +99,7 @@ export default memo(function MonthCalendarPager({
                 headerCellAccessibilityProps={{}}
               />
               <CalendarBodyForMonthView
-                containerHeight={height - 220} // Adjusted for header
+                containerHeight={height} // Adjusted for header
                 targetDate={page.date}
                 events={allEvents}
                 style={styles.calendarBody}
