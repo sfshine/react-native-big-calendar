@@ -2,7 +2,6 @@ import calendarize from "calendarize";
 import * as React from "react";
 import {
   type AccessibilityProps,
-  FlatList,
   LayoutAnimation,
   Platform,
   Text,
@@ -14,7 +13,6 @@ import {
 
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
-import isBetween from "dayjs/plugin/isBetween";
 import isoWeek from "dayjs/plugin/isoWeek";
 import {
   CalendarCellStyle,
@@ -31,8 +29,8 @@ import {
 } from "react-native-big-calendar";
 import { styles } from "./CalendarBodyForMonthView.styles";
 import { CalendarEventForMonthView } from "./CalendarEventForMonthView";
+import { DayEventsList } from "./DayEventsList";
 
-dayjs.extend(isBetween);
 dayjs.extend(duration);
 dayjs.extend(isoWeek);
 
@@ -468,66 +466,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
         }
         return elements;
       })()}
-    </View>
-  );
-}
-
-function DayEventsList<T extends ICalendarEventBase>({
-  events,
-  selectedDate,
-  onPressEvent,
-  style,
-}: {
-  events: T[];
-  selectedDate: dayjs.Dayjs;
-  onPressEvent?: (event: T) => void;
-  style?: ViewStyle;
-}) {
-  const dayEvents = React.useMemo(
-    () =>
-      events.filter(({ start, end }) =>
-        selectedDate.isBetween(
-          dayjs(start).startOf("day"),
-          dayjs(end).endOf("day"),
-          null,
-          "[)"
-        )
-      ),
-    [events, selectedDate]
-  );
-
-  const renderItem = ({ item }: { item: T }) => (
-    <View
-      style={{
-        padding: 8,
-        marginHorizontal: 12,
-        marginVertical: 4,
-        backgroundColor: "white",
-        borderRadius: 4,
-      }}
-    >
-      <Text>{item.title}</Text>
-      <Text style={{ fontSize: 12, color: "#888" }}>
-        {dayjs(item.start).format("HH:mm")} - {dayjs(item.end).format("HH:mm")}
-      </Text>
-    </View>
-  );
-
-  return (
-    <View style={[{ backgroundColor: "#f5f5f5" }, style]}>
-      {dayEvents.length > 0 ? (
-        <FlatList
-          data={dayEvents}
-          keyExtractor={(item, index) => `${item.start}${item.title}${index}`}
-          renderItem={renderItem}
-        />
-      ) : (
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <Text>No events for this day.</Text>
-        </View>
-      )}
     </View>
   );
 }
