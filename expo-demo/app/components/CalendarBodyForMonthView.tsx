@@ -366,23 +366,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                 {...calendarCellAccessibilityPropsForMonthView}
               >
                 <React.Fragment>
-                  <TouchableOpacity
-                    onPress={() =>
-                      date &&
-                      (onPressDateHeader
-                        ? onPressDateHeader(date.toDate())
-                        : onPressCell?.(date.toDate()))
-                    }
-                    onLongPress={() =>
-                      date &&
-                      (onPressDateHeader
-                        ? onPressDateHeader(date.toDate())
-                        : onLongPressCell?.(date.toDate()))
-                    }
-                    {...(calendarCellAccessibilityProps as AccessibilityProps)}
-                  >
-                    {renderDateCell(date, i)}
-                  </TouchableOpacity>
+                  <View>{renderDateCell(date, i)}</View>
                   {
                     //Calendar body will re-render after calendarWidth/calendarCellHeight is set from layout event, prevent expensive operation during first render
                     calendarWidth > 0 &&
@@ -397,9 +381,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                             <Text
                               key={`${index}-${event.start}-${event.title}-${event.end}`}
                               style={styles.moreLabelText}
-                              onPress={() =>
-                                onPressMoreLabel?.(events, date.toDate())
-                              }
                             >
                               {moreLabel.replace(
                                 "{moreCount}",
