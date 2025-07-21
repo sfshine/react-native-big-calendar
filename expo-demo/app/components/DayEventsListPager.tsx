@@ -26,6 +26,7 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   style,
 }: DayEventsListPagerProps<T>) {
   const pagerRef = React.useRef<PagerView>(null);
+  const currentPageIndex = React.useRef<number | null>(null);
 
   // 找到当前选中日期在这一周中的索引
   const selectedIndex = React.useMemo(
@@ -35,14 +36,15 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
 
   // 当选中日期改变时，切换到对应的页面
   React.useEffect(() => {
-    if (selectedIndex >= 0 && pagerRef.current) {
+    if (selectedIndex >= 0 && pagerRef.current && selectedIndex !== currentPageIndex.current) {
       pagerRef.current.setPage(selectedIndex);
     }
   }, [selectedIndex]);
 
   const handlePageSelected = (e: any) => {
     const newIndex = e.nativeEvent.position;
-    if (newIndex >= 0 && newIndex < weekDates.length) {
+    currentPageIndex.current = newIndex;
+    if (newIndex >= 0 && newIndex < weekDates.length && !weekDates[newIndex].isSame(selectedDate)) {
       onDateChange?.(weekDates[newIndex]);
     }
   };
