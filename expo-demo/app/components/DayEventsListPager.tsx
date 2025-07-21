@@ -48,7 +48,7 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
       isSettingPageProgrammatically.current = true;
       pagerRef.current.setPage(selectedIndex);
       console.log("setPage:selectedIndex", selectedIndex);
-      
+
       // 使用timeout来重置标志位，给足够时间让页面切换完成
       setTimeout(() => {
         isSettingPageProgrammatically.current = false;
@@ -59,13 +59,16 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   const handlePageSelected = (e: any) => {
     const newIndex = e.nativeEvent.position;
     currentPageIndex.current = newIndex;
-    
+
     // 如果是程序化设置页面，则不触发日期变化回调
     if (isSettingPageProgrammatically.current) {
-      console.log("handlePageSelected: ignoring programmatic page change", newIndex);
+      console.log(
+        "handlePageSelected: ignoring programmatic page change",
+        newIndex
+      );
       return;
     }
-    
+
     if (
       newIndex >= 0 &&
       newIndex < weekDates.length &&
@@ -97,7 +100,7 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
     );
 
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: "yellow" }}>
         {dayEvents.length > 0 ? (
           <FlatList
             data={dayEvents}
