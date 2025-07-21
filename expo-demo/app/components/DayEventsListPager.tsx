@@ -27,6 +27,8 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
 }: DayEventsListPagerProps<T>) {
   const pagerRef = React.useRef<PagerView>(null);
   const currentPageIndex = React.useRef<number | null>(null);
+  // 添加标志位来防止程序化页面切换时触发不必要的回调
+  const isSettingPageProgrammatically = React.useRef(false);
 
   // 找到当前选中日期在这一周中的索引
   const selectedIndex = React.useMemo(
@@ -42,14 +44,28 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
       pagerRef.current &&
       selectedIndex !== currentPageIndex.current
     ) {
+      // 设置标志位，表明这是程序化的页面切换
+      isSettingPageProgrammatically.current = true;
       pagerRef.current.setPage(selectedIndex);
       console.log("setPage:selectedIndex", selectedIndex);
+      
+      // 使用timeout来重置标志位，给足够时间让页面切换完成
+      setTimeout(() => {
+        isSettingPageProgrammatically.current = false;
+      }, 300);
     }
   }, [selectedIndex]);
 
   const handlePageSelected = (e: any) => {
     const newIndex = e.nativeEvent.position;
     currentPageIndex.current = newIndex;
+    
+    // 如果是程序化设置页面，则不触发日期变化回调
+    if (isSettingPageProgrammatically.current) {
+      console.log("handlePageSelected: ignoring programmatic page change", newIndex);
+      return;
+    }
+    
     if (
       newIndex >= 0 &&
       newIndex < weekDates.length &&
