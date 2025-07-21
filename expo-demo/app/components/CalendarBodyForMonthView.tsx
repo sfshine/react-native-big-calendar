@@ -29,7 +29,7 @@ import {
 } from "react-native-big-calendar";
 import { styles } from "./CalendarBodyForMonthView.styles";
 import { CalendarEventForMonthView } from "./CalendarEventForMonthView";
-import { DayEventsList } from "./DayEventsList";
+import DayEventsListPager from "./DayEventsListPager";
 
 dayjs.extend(duration);
 dayjs.extend(isoWeek);
@@ -445,11 +445,11 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
             ? cellHeight * (weeks.length - 1)
             : cellHeight * (weeks.length - 2);
           elements.push(
-            <DayEventsList
+            <DayEventsListPager
               key="day-events-list"
               events={events}
               selectedDate={selectedDate}
-              onPressEvent={onPressEvent}
+              onDateChange={setSelectedDate}
               style={{ height: eventListHeight }}
             />
           );
