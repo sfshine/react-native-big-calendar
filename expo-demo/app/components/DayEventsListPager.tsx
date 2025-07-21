@@ -36,7 +36,11 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
 
   // 当选中日期改变时，切换到对应的页面
   React.useEffect(() => {
-    if (selectedIndex >= 0 && pagerRef.current && selectedIndex !== currentPageIndex.current) {
+    if (
+      selectedIndex >= 0 &&
+      pagerRef.current &&
+      selectedIndex !== currentPageIndex.current
+    ) {
       pagerRef.current.setPage(selectedIndex);
     }
   }, [selectedIndex]);
@@ -44,7 +48,11 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   const handlePageSelected = (e: any) => {
     const newIndex = e.nativeEvent.position;
     currentPageIndex.current = newIndex;
-    if (newIndex >= 0 && newIndex < weekDates.length && !weekDates[newIndex].isSame(selectedDate)) {
+    if (
+      newIndex >= 0 &&
+      newIndex < weekDates.length &&
+      !weekDates[newIndex].isSame(selectedDate)
+    ) {
       onDateChange?.(weekDates[newIndex]);
     }
   };
