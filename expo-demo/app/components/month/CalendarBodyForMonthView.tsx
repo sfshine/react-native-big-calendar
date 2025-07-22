@@ -29,7 +29,6 @@ import {
 } from "react-native-big-calendar";
 import { styles } from "./CalendarBodyForMonthView.styles";
 import { CalendarEventForMonthView } from "./CalendarEventForMonthView";
-import { DayEventsList } from "./DayEventsList";
 import { DayEventsListPager } from "./dayevent/DayEventsListPager";
 
 dayjs.extend(duration);
