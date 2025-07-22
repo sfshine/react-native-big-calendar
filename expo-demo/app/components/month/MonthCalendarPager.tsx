@@ -43,8 +43,9 @@ export default memo(function MonthCalendarPager({
   setCurrentPageIndex,
   pagerRef,
 }: MonthCalendarPagerProps) {
-  const { height } = useWindowDimensions();
   const [isEventExpanded, setIsEventExpanded] = useState(false);
+  const { height, width } = useWindowDimensions();
+  const calendarBodyHeight = height * 0.9;
 
   const pageCount = 12; // For month view, we can have a fixed number of pages
   const initialPage = 6; // Centered around the baseDate
@@ -57,21 +58,13 @@ export default memo(function MonthCalendarPager({
     });
   }, [baseDate, pageCount, initialPage]);
 
-  const currentDisplayDate = baseDate.add(
-    currentPageIndex - initialPage,
-    "month"
-  );
-
   const onPageSelected = (event: any) => {
     const position = event.nativeEvent.position;
     setCurrentPageIndex(position);
   };
 
   return (
-    <>
-      <Text style={styles.header}>
-        {currentDisplayDate.format("MMMM YYYY")}
-      </Text>
+    <View style={styles.pagerView}>
       <PagerView
         offscreenPageLimit={offscreenPageLimit}
         ref={pagerRef}
@@ -111,12 +104,14 @@ export default memo(function MonthCalendarPager({
                 showAdjacentMonths={true}
                 sortedMonthView={true}
                 onExpandedStateChange={setIsEventExpanded}
+                calendarWidth={width}
+                calendarBodyHeight={calendarBodyHeight}
               />
             </View>
           );
         })}
       </PagerView>
-    </>
+    </View>
   );
 });
 

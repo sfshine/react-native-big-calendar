@@ -62,6 +62,8 @@ interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
   renderCustomDateForMonth?: (date: Date) => React.ReactElement | null;
   disableMonthEventCellPress?: boolean;
   onExpandedStateChange?: (isExpanded: boolean) => void;
+  calendarWidth: number;
+  calendarBodyHeight: number;
 }
 
 function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
@@ -91,23 +93,20 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   renderCustomDateForMonth,
   disableMonthEventCellPress,
   onExpandedStateChange,
+  calendarWidth,
+  calendarBodyHeight,
 }: CalendarBodyForMonthViewProps<T>) {
   const { now } = useNow(!hideNowIndicator);
-  const [calendarWidth, setCalendarWidth] = React.useState<number>(0);
-  const [calendarCellHeight, setCalendarCellHeight] = React.useState<number>(0);
   const [selectedDate, setSelectedDate] = React.useState<dayjs.Dayjs | null>(
     null
   );
   const [expandedWeek, setExpandedWeek] = React.useState<number | null>(null);
 
-  React.useEffect(() => {
-    return () => {
-    };
-  }, []);
-
   const weeks = showAdjacentMonths
     ? getWeeksWithAdjacentMonths(targetDate, weekStartsOn)
     : calendarize(targetDate.toDate(), weekStartsOn);
+
+  const calendarCellHeight = calendarBodyHeight / weeks.length;
 
   const getCalendarCellStyle = React.useMemo(
     () =>
@@ -364,11 +363,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   isCellSelected && { backgroundColor: "rgba(0,0,0,0.1)" },
                 ]}
                 key={`${ii}-${date?.toDate()}`}
-                onLayout={({ nativeEvent: { layout } }) => {
-                  if (layout.height > calendarCellHeight) {
-                    setCalendarCellHeight(layout.height);
-                  }
-                }}
                 {...calendarCellAccessibilityPropsForMonthView}
               >
                 <React.Fragment>
@@ -431,12 +425,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   };
 
   return (
-    <View
-      style={[styles.container, style]}
-      onLayout={({ nativeEvent: { layout } }) => {
-        setCalendarWidth(layout.width);
-      }}
-    >
+    <View style={[styles.container, style]}>
       {(() => {
         if (expandedWeek === null) {
           return weeks.map((week, i) => (
