@@ -2,13 +2,14 @@ import calendarize from "calendarize";
 import * as React from "react";
 import {
   type AccessibilityProps,
+  LayoutAnimation,
   Platform,
   Text,
+  TouchableOpacity,
+  UIManager,
   View,
   type ViewStyle,
 } from "react-native";
-
-import { BWTouchableOpacity as TouchableOpacity } from "../../BWTouchableOpacity";
 
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
@@ -124,6 +125,12 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   );
 
   const handleDayPress = (date: dayjs.Dayjs, weekIndex: number) => {
+    if (Platform.OS === "android") {
+      if (UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+      }
+    }
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     if (selectedDate && selectedDate.isSame(date, "day")) {
       setSelectedDate(null);
       setExpandedWeek(null);
@@ -392,44 +399,54 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                     calendarWidth > 0 &&
                       (!disableMonthEventCellPress || calendarCellHeight > 0) &&
                       date &&
-                      sortedEvents(date).reduce(
-                        (elements, event, index, events) => [
-                          // biome-ignore lint/performance/noAccumulatingSpread: Acceptable to use spread operator here
-                          ...elements,
-                          index > maxVisibleEventCount ? null : index ===
-                            maxVisibleEventCount ? (
-                            <Text
-                              key={`${index}-${event.start}-${event.title}-${event.end}`}
-                              style={styles.moreLabelText}
-                            >
-                              {moreLabel.replace(
-                                "{moreCount}",
-                                `${events.length - maxVisibleEventCount}`
-                              )}
-                            </Text>
-                          ) : (
-                            <CalendarEventForMonthView
-                              key={`${index}-${event.start}-${event.title}-${event.end}`}
-                              event={event}
-                              eventCellStyle={eventCellStyle}
-                              eventCellAccessibilityProps={
-                                eventCellAccessibilityProps as AccessibilityProps
-                              }
-                              onPressEvent={onPressEvent}
-                              renderEvent={renderEvent}
-                              date={date}
-                              dayOfTheWeek={ii}
-                              calendarWidth={calendarWidth}
-                              isRTL={false}
-                              eventMinHeightForMonthView={
-                                eventMinHeightForMonthView
-                              }
-                              showAdjacentMonths={showAdjacentMonths}
-                            />
-                          ),
-                        ],
-                        [] as (null | JSX.Element)[]
-                      )
+                      (() => {
+                        const dayEvents = sortedEvents(date);
+                        const eventsToShow = dayEvents.slice(
+                          0,
+                          maxVisibleEventCount
+                        );
+                        const moreCount =
+                          dayEvents.length - maxVisibleEventCount;
+
+                        return (
+                          <React.Fragment>
+                            {eventsToShow.map((event, index) => (
+                              <CalendarEventForMonthView
+                                key={`${index}-${event.start}-${event.title}-${event.end}`}
+                                event={event}
+                                eventCellStyle={eventCellStyle}
+                                eventCellAccessibilityProps={
+                                  eventCellAccessibilityProps as AccessibilityProps
+                                }
+                                onPressEvent={onPressEvent}
+                                renderEvent={renderEvent}
+                                date={date}
+                                dayOfTheWeek={ii}
+                                calendarWidth={calendarWidth}
+                                isRTL={false}
+                                eventMinHeightForMonthView={
+                                  eventMinHeightForMonthView
+                                }
+                                showAdjacentMonths={showAdjacentMonths}
+                              />
+                            ))}
+                            {moreCount > 0 && (
+                              <Text
+                                key={`more-${date.toString()}`}
+                                style={styles.moreLabelText}
+                                onPress={() =>
+                                  onPressMoreLabel?.(dayEvents, date.toDate())
+                                }
+                              >
+                                {moreLabel.replace(
+                                  "{moreCount}",
+                                  `${moreCount}`
+                                )}
+                              </Text>
+                            )}
+                          </React.Fragment>
+                        );
+                      })()
                   }
                 </React.Fragment>
                 {isCellSelected ? (
