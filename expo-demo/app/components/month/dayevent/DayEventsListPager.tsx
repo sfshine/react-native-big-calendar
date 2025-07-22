@@ -39,10 +39,17 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   // 始终从页面0开始，通过 setPageWithoutAnimation 来处理所有页面切换
   const initialPage = 0;
 
-  console.log("selectedIndex", selectedIndex);
+  console.log("selectedDate = ", selectedDate);
+  console.log("selectedIndex = ", selectedIndex);
 
   // 当选中日期改变时，切换到对应的页面
   React.useEffect(() => {
+    console.log(
+      "useEffect:selectedIndex = ",
+      selectedIndex,
+      "currentPageIndex = ",
+      currentPageIndex.current
+    );
     if (selectedIndex >= 0 && selectedIndex !== currentPageIndex.current) {
       // 使用 requestAnimationFrame 确保在下一个渲染周期执行, 避免 iOS 展开下周日程列表时不显示问题
       requestAnimationFrame(() => {
