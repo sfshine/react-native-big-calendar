@@ -41,16 +41,6 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
 
   console.log("selectedIndex", selectedIndex);
 
-  // 页面滚动结束时的回调
-  const handlePageScrollStateChanged = React.useCallback((e: any) => {
-    const state = e.nativeEvent.pageScrollState;
-    // 当页面滚动结束时，重置程序化设置标志位
-    if (state === 'idle') {
-      isSettingPageProgrammatically.current = false;
-      console.log("Page scroll ended, reset programmatic flag");
-    }
-  }, []);
-
   // 当选中日期改变时，切换到对应的页面
   React.useEffect(() => {
     if (selectedIndex >= 0 && selectedIndex !== currentPageIndex.current) {
@@ -59,6 +49,9 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
         if (pagerRef.current) {
           isSettingPageProgrammatically.current = true;
           pagerRef.current.setPageWithoutAnimation(selectedIndex);
+          setTimeout(() => {
+            isSettingPageProgrammatically.current = false;
+          }, 100);
           console.log("setPageWithoutAnimation:selectedIndex", selectedIndex);
         }
       });
@@ -134,7 +127,6 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
         style={{ flex: 1 }}
         initialPage={initialPage}
         onPageSelected={handlePageSelected}
-        onPageScrollStateChanged={handlePageScrollStateChanged}
       >
         {weekDates.map((date, index) => (
           <View key={date.format("YYYY-MM-DD")} style={{ flex: 1 }}>
