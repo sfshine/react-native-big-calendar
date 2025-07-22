@@ -1,6 +1,9 @@
 import * as React from "react";
 import { FlatList, Text, View, type ViewStyle } from "react-native";
-import PagerView from "react-native-pager-view";
+import PagerView, {
+  type PagerViewOnPageSelectedEvent,
+  type PageScrollStateChangedNativeEvent,
+} from "react-native-pager-view";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import { ICalendarEventBase } from "react-native-big-calendar";
@@ -26,55 +29,38 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   style,
 }: DayEventsListPagerProps<T>) {
   const pagerRef = React.useRef<PagerView>(null);
-  const currentPageIndex = React.useRef<number | null>(null);
-  // 添加标志位来防止程序化页面切换时触发不必要的回调
-  const isSettingPageProgrammatically = React.useRef(false);
+  const isProgrammaticScroll = React.useRef(false);
+  const currentPage = React.useRef(
+    weekDates.findIndex((d) => d.isSame(selectedDate, "day"))
+  );
 
-  // 找到当前选中日期在这一周中的索引
   const selectedIndex = React.useMemo(
     () => weekDates.findIndex((date) => date.isSame(selectedDate, "day")),
     [weekDates, selectedDate]
   );
 
-  // 始终从页面0开始，通过 setPageWithoutAnimation 来处理所有页面切换
-  const initialPage = 0;
-
-  console.log("selectedDate = ", selectedDate);
-  console.log("selectedIndex = ", selectedIndex);
-
-  // 当选中日期改变时，切换到对应的页面
   React.useEffect(() => {
-    console.log(
-      "useEffect:selectedIndex = ",
-      selectedIndex,
-      "currentPageIndex = ",
-      currentPageIndex.current
-    );
-    if (selectedIndex >= 0 && selectedIndex !== currentPageIndex.current) {
-      // 使用 requestAnimationFrame 确保在下一个渲染周期执行, 避免 iOS 展开下周日程列表时不显示问题
-      requestAnimationFrame(() => {
-        if (pagerRef.current) {
-          isSettingPageProgrammatically.current = true;
-          pagerRef.current.setPageWithoutAnimation(selectedIndex);
-          setTimeout(() => {
-            isSettingPageProgrammatically.current = false;
-          }, 100);
-          console.log("setPageWithoutAnimation:selectedIndex", selectedIndex);
-        }
-      });
+    if (
+      selectedIndex >= 0 &&
+      selectedIndex !== currentPage.current &&
+      pagerRef.current
+    ) {
+      isProgrammaticScroll.current = true;
+      pagerRef.current.setPage(selectedIndex);
     }
   }, [selectedIndex]);
 
-  const handlePageSelected = (e: any) => {
-    const newIndex = e.nativeEvent.position;
-    currentPageIndex.current = newIndex;
+  const handlePageScrollStateChanged = (e: PageScrollStateChangedNativeEvent) => {
+    if (e.nativeEvent.pageScrollState === "idle") {
+      isProgrammaticScroll.current = false;
+    }
+  };
 
-    // 如果是程序化设置页面，则不触发日期变化回调
-    if (isSettingPageProgrammatically.current) {
-      console.log(
-        "handlePageSelected: ignoring programmatic page change",
-        newIndex
-      );
+  const handlePageSelected = (e: PagerViewOnPageSelectedEvent) => {
+    const newIndex = e.nativeEvent.position;
+    currentPage.current = newIndex;
+
+    if (isProgrammaticScroll.current) {
       return;
     }
 
@@ -84,7 +70,6 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
       !weekDates[newIndex].isSame(selectedDate)
     ) {
       onDateChange?.(weekDates[newIndex]);
-      console.log("handlePageSelected:newIndex", newIndex);
     }
   };
 
@@ -127,6 +112,8 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
     );
   };
 
+  const initialPage = selectedIndex > -1 ? selectedIndex : 0;
+
   return (
     <View style={[style, { backgroundColor: "green" }]}>
       <PagerView
@@ -134,8 +121,10 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
         style={{ flex: 1 }}
         initialPage={initialPage}
         onPageSelected={handlePageSelected}
+        onPageScrollStateChanged={handlePageScrollStateChanged}
+        key={weekDates.map((d) => d.format("YYYY-MM-DD")).join("-")}
       >
-        {weekDates.map((date, index) => (
+        {weekDates.map((date) => (
           <View key={date.format("YYYY-MM-DD")} style={{ flex: 1 }}>
             {renderDayEvents(date)}
           </View>
