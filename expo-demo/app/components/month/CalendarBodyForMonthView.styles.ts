@@ -3,7 +3,6 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
   container: {
     flexDirection: "column",
-    flex: 1,
     borderBottomWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
@@ -15,7 +14,6 @@ export const styles = StyleSheet.create({
     fontSize: 13,
   },
   weekRow: {
-    flex: 1,
     flexDirection: "row",
   },
   weekNumberContainer: {
@@ -46,15 +44,15 @@ export const styles = StyleSheet.create({
     left: 0,
   },
   collapseContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 2,
     left: 0,
     right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   collapseText: {
     fontSize: 12,
-    color: '#424242',
+    color: "#424242",
   },
 });

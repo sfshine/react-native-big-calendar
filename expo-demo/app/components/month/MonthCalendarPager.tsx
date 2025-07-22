@@ -45,7 +45,7 @@ export default memo(function MonthCalendarPager({
 }: MonthCalendarPagerProps) {
   const [isEventExpanded, setIsEventExpanded] = useState(false);
   const { height, width } = useWindowDimensions();
-  const calendarBodyHeight = height * 0.9;
+  const calendarBodyHeight = 600;
 
   const pageCount = 12; // For month view, we can have a fixed number of pages
   const initialPage = 6; // Centered around the baseDate

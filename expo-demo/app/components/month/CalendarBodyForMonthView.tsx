@@ -319,6 +319,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           styles.weekRow,
           Platform.OS === "android" && style, // TODO: in Android, backgroundColor is not applied to child components
           { backgroundColor: "red" },
+          { height: calendarCellHeight },
         ]}
       >
         {showWeekNumber ? (
@@ -425,7 +426,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   };
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style, { height: calendarBodyHeight }]}>
       {(() => {
         if (expandedWeek === null) {
           return weeks.map((week, i) => (
