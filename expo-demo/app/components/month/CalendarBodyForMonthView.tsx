@@ -100,6 +100,11 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   );
   const [expandedWeek, setExpandedWeek] = React.useState<number | null>(null);
 
+  React.useEffect(() => {
+    return () => {
+    };
+  }, []);
+
   const weeks = showAdjacentMonths
     ? getWeeksWithAdjacentMonths(targetDate, weekStartsOn)
     : calendarize(targetDate.toDate(), weekStartsOn);
@@ -359,13 +364,11 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   isCellSelected && { backgroundColor: "rgba(0,0,0,0.1)" },
                 ]}
                 key={`${ii}-${date?.toDate()}`}
-                onLayout={({ nativeEvent: { layout } }) =>
-                  // Only set calendarCellHeight once because they are all same
-                  i === 0 &&
-                  ii === 0 &&
-                  setCalendarCellHeight(layout.height) &&
-                  console.log("layout.height", layout.height)
-                }
+                onLayout={({ nativeEvent: { layout } }) => {
+                  if (layout.height > calendarCellHeight) {
+                    setCalendarCellHeight(layout.height);
+                  }
+                }}
                 {...calendarCellAccessibilityPropsForMonthView}
               >
                 <React.Fragment>
@@ -457,11 +460,9 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           const eventListHeight = isLastWeek
             ? calendarCellHeight * (weeks.length - 1)
             : calendarCellHeight * (weeks.length - 2);
-          console.log("eventListHeight", eventListHeight);
-          console.log("calendarCellHeight", calendarCellHeight);
           elements.push(
             <DayEventsListPager
-              key="day-events-list-pager"
+              key={weekDates.map((d) => d.format("YYYY-MM-DD")).join("-")}
               events={events}
               selectedDate={selectedDate}
               weekDates={weekDates}
