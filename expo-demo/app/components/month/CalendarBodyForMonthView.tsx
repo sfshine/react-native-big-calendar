@@ -195,25 +195,19 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   calendarWidth,
   calendarBodyHeight,
 }: CalendarBodyForMonthViewProps<T>) {
-  const renderCount = React.useRef(0);
-  React.useEffect(() => {
-    renderCount.current += 1;
-    console.log(
-      `[Perf] CalendarBodyForMonthView render count: ${renderCount.current}`
-    );
-  });
-
   const { now } = useNow(!hideNowIndicator);
   const [selectedDate, setSelectedDate] = React.useState<dayjs.Dayjs | null>(
     null
   );
   const [expandedWeek, setExpandedWeek] = React.useState<number | null>(null);
 
-  const weeksCalculationStart = Date.now();
-  const weeks = showAdjacentMonths
-    ? getWeeksWithAdjacentMonths(targetDate, weekStartsOn)
-    : calendarize(targetDate.toDate(), weekStartsOn);
-  console.log(`[Perf] weeks calculation took ${Date.now() - weeksCalculationStart}ms`);
+  const weeks = React.useMemo(
+    () =>
+      showAdjacentMonths
+        ? getWeeksWithAdjacentMonths(targetDate, weekStartsOn)
+        : calendarize(targetDate.toDate(), weekStartsOn),
+    [showAdjacentMonths, targetDate, weekStartsOn]
+  );
 
   const calendarCellHeight = calendarBodyHeight / weeks.length;
 
@@ -234,32 +228,21 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   );
 
   const handleDayPress = (date: dayjs.Dayjs, weekIndex: number) => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       if (UIManager.setLayoutAnimationEnabledExperimental) {
-        UIManager.setLayoutAnimationEnabledExperimental(true)
+        UIManager.setLayoutAnimationEnabledExperimental(true);
       }
     }
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-    const start = Date.now();
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     if (selectedDate && selectedDate.isSame(date, "day")) {
-      console.log("handleDayPress: collapsing");
       setSelectedDate(null);
       setExpandedWeek(null);
       onExpandedStateChange?.(false);
     } else {
-      const previouslySelected = !!selectedDate;
-      if (previouslySelected) {
-        console.log(
-          `handleDayPress: switching from week ${expandedWeek} to ${weekIndex}`
-        );
-      } else {
-        console.log(`handleDayPress: expanding week ${weekIndex}`);
-      }
       setSelectedDate(date);
       setExpandedWeek(weekIndex);
       onExpandedStateChange?.(true);
     }
-    console.log(`handleDayPress took ${Date.now() - start}ms`);
   };
 
   const handleDateChange = (newDate: dayjs.Dayjs) => {
@@ -298,16 +281,15 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   }, [expandedWeek, weeks, targetDate, showAdjacentMonths]);
 
   const eventsInMonth = React.useMemo(() => {
-    const eventsInMonthCalculationStart = Date.now();
     const map = new Map<string, T[]>();
 
     // Define the visible date range
     const startDate = showAdjacentMonths
-      ? targetDate.startOf('month').startOf('week')
-      : targetDate.startOf('month');
+      ? targetDate.startOf("month").startOf("week")
+      : targetDate.startOf("month");
     const endDate = showAdjacentMonths
-      ? targetDate.endOf('month').endOf('week')
-      : targetDate.endOf('month');
+      ? targetDate.endOf("month").endOf("week")
+      : targetDate.endOf("month");
 
     // Filter events that fall within the visible date range
     const filteredEvents = events.filter(
@@ -346,21 +328,13 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
         current = current.add(1, "day");
       }
     }
-    console.log(
-      `[Perf] eventsInMonth calculation took ${
-        Date.now() - eventsInMonthCalculationStart
-      }ms`
-    );
     return map;
   }, [events, targetDate, weeks, showAdjacentMonths]);
 
   const sortedEvents = React.useCallback(
     (day: dayjs.Dayjs) => {
-      const sortedEventsStart = Date.now();
       if (!sortedMonthView) {
-        const result = eventsInMonth.get(day.format(SIMPLE_DATE_FORMAT)) || [];
-        console.log(`[Perf] sortedEvents (unsorted) for ${day.format(SIMPLE_DATE_FORMAT)} took ${Date.now() - sortedEventsStart}ms`);
-        return result;
+        return eventsInMonth.get(day.format(SIMPLE_DATE_FORMAT)) || [];
       }
 
       /**
@@ -457,7 +431,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
         tmpDay = tmpDay.add(1, "day");
       }
 
-      console.log(`[Perf] sortedEvents (sorted) for ${day.format(SIMPLE_DATE_FORMAT)} took ${Date.now() - sortedEventsStart}ms`);
       return finalEvents;
     },
     [eventsInMonth, sortedMonthView]
@@ -490,7 +463,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   };
 
   const renderWeekRow = (week: (number | 0)[], i: number) => {
-    const renderWeekRowStart = Date.now();
     const jsx = (
       <View
         style={[
@@ -584,27 +556,20 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           })}
       </View>
     );
-    console.log(`[Perf] renderWeekRow ${i} took ${Date.now() - renderWeekRowStart}ms`);
     return jsx;
   };
 
-  const renderStart = Date.now();
   const result = (
     <View style={[styles.container, style, { height: calendarBodyHeight }]}>
       {(() => {
-        const generationStart = Date.now();
         if (expandedWeek === null) {
-          console.log("Rendering collapsed view with all weeks.");
-          const weeksJsx = weeks.map((week, i) => (
+          return weeks.map((week, i) => (
             <React.Fragment key={`${i}-${week.join("-")}`}>
               {renderWeekRow(week, i)}
             </React.Fragment>
           ));
-          console.log(`Finished generating JSX for collapsed view. Took ${Date.now() - generationStart}ms`);
-          return weeksJsx;
         }
 
-        console.log(`Rendering expanded view for week ${expandedWeek}.`);
         const elements = [];
         elements.push(
           <React.Fragment
@@ -641,12 +606,10 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
             </React.Fragment>
           );
         }
-        console.log(`Finished generating JSX for expanded view. Took ${Date.now() - generationStart}ms`);
         return elements;
       })()}
     </View>
   );
-  console.log(`[Perf] CalendarBodyForMonthView render took ${Date.now() - renderStart}ms`);
   return result;
 }
 
