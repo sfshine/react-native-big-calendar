@@ -45,4 +45,16 @@ export const styles = StyleSheet.create({
     top: 0,
     left: 0,
   },
+  collapseContainer: {
+    position: 'absolute',
+    bottom: 2,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  collapseText: {
+    fontSize: 12,
+    color: '#424242',
+  },
 });

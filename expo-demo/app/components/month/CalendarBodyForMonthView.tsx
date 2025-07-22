@@ -415,6 +415,11 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                       )
                   }
                 </React.Fragment>
+                {isCellSelected ? (
+                  <View style={styles.collapseContainer}>
+                    <Text style={styles.collapseText}>收起</Text>
+                  </View>
+                ) : null}
               </TouchableOpacity>
             );
           })}
