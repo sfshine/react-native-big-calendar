@@ -34,6 +34,76 @@ import { BWTouchableOpacity as TouchableOpacity } from "../../BWTouchableOpacity
 dayjs.extend(duration);
 dayjs.extend(isoWeek);
 
+interface MemoizedDayEventsProps<T extends ICalendarEventBase> {
+  date: dayjs.Dayjs;
+  sortedEvents: (date: dayjs.Dayjs) => T[];
+  maxVisibleEventCount: number;
+  dayOfTheWeek: number;
+  calendarWidth: number;
+  eventMinHeightForMonthView: number;
+  showAdjacentMonths: boolean;
+  moreLabel: string;
+  onPressMoreLabel?: (events: T[], date: Date) => void;
+  onPressEvent?: (event: T) => void;
+  renderEvent?: EventRenderer<T>;
+  eventCellStyle?: EventCellStyle<T>;
+  eventCellAccessibilityProps: AccessibilityProps;
+}
+
+function _MemoizedDayEvents<T extends ICalendarEventBase>({
+  date,
+  sortedEvents,
+  maxVisibleEventCount,
+  dayOfTheWeek,
+  calendarWidth,
+  eventMinHeightForMonthView,
+  showAdjacentMonths,
+  moreLabel,
+  onPressMoreLabel,
+  onPressEvent,
+  renderEvent,
+  eventCellStyle,
+  eventCellAccessibilityProps,
+}: MemoizedDayEventsProps<T>) {
+  const dayEvents = sortedEvents(date);
+  const eventsToShow = dayEvents.slice(0, maxVisibleEventCount);
+  const moreCount = dayEvents.length - maxVisibleEventCount;
+
+  return (
+    <React.Fragment>
+      {eventsToShow.map((event, index) => (
+        <CalendarEventForMonthView
+          key={`${index}-${event.start}-${event.title}-${event.end}`}
+          event={event}
+          eventCellStyle={eventCellStyle}
+          eventCellAccessibilityProps={
+            eventCellAccessibilityProps as AccessibilityProps
+          }
+          onPressEvent={onPressEvent}
+          renderEvent={renderEvent}
+          date={date}
+          dayOfTheWeek={dayOfTheWeek}
+          calendarWidth={calendarWidth}
+          isRTL={false}
+          eventMinHeightForMonthView={eventMinHeightForMonthView}
+          showAdjacentMonths={showAdjacentMonths}
+        />
+      ))}
+      {moreCount > 0 && (
+        <Text
+          key={`more-${date.toString()}`}
+          style={styles.moreLabelText}
+          onPress={() => onPressMoreLabel?.(dayEvents, date.toDate())}
+        >
+          {moreLabel.replace("{moreCount}", `${moreCount}`)}
+        </Text>
+      )}
+    </React.Fragment>
+  );
+}
+
+const MemoizedDayEvents = typedMemo(_MemoizedDayEvents);
+
 interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
   targetDate: dayjs.Dayjs;
   events: T[];
@@ -110,11 +180,11 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   );
   const [expandedWeek, setExpandedWeek] = React.useState<number | null>(null);
 
-  console.time("[Perf] weeks calculation");
+  const weeksCalculationStart = Date.now();
   const weeks = showAdjacentMonths
     ? getWeeksWithAdjacentMonths(targetDate, weekStartsOn)
     : calendarize(targetDate.toDate(), weekStartsOn);
-  console.timeEnd("[Perf] weeks calculation");
+  console.log(`[Perf] weeks calculation took ${Date.now() - weeksCalculationStart}ms`);
 
   const calendarCellHeight = calendarBodyHeight / weeks.length;
 
@@ -135,15 +205,32 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   );
 
   const handleDayPress = (date: dayjs.Dayjs, weekIndex: number) => {
+    if (Platform.OS === 'android') {
+      if (UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true)
+      }
+    }
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    const start = Date.now();
     if (selectedDate && selectedDate.isSame(date, "day")) {
+      console.log("handleDayPress: collapsing");
       setSelectedDate(null);
       setExpandedWeek(null);
       onExpandedStateChange?.(false);
     } else {
+      const previouslySelected = !!selectedDate;
+      if (previouslySelected) {
+        console.log(
+          `handleDayPress: switching from week ${expandedWeek} to ${weekIndex}`
+        );
+      } else {
+        console.log(`handleDayPress: expanding week ${weekIndex}`);
+      }
       setSelectedDate(date);
       setExpandedWeek(weekIndex);
       onExpandedStateChange?.(true);
     }
+    console.log(`handleDayPress took ${Date.now() - start}ms`);
   };
 
   const handleDateChange = (newDate: dayjs.Dayjs) => {
@@ -182,8 +269,23 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   }, [expandedWeek, weeks, targetDate, showAdjacentMonths]);
 
   const eventsInMonth = React.useMemo(() => {
-    console.time("[Perf] eventsInMonth calculation");
+    const eventsInMonthCalculationStart = Date.now();
     const map = new Map<string, T[]>();
+
+    // Define the visible date range
+    const startDate = showAdjacentMonths
+      ? targetDate.startOf('month').startOf('week')
+      : targetDate.startOf('month');
+    const endDate = showAdjacentMonths
+      ? targetDate.endOf('month').endOf('week')
+      : targetDate.endOf('month');
+
+    // Filter events that fall within the visible date range
+    const filteredEvents = events.filter(
+      (event) =>
+        dayjs(event.start).isBefore(endDate) &&
+        dayjs(event.end).isAfter(startDate)
+    );
 
     // Initialize map with all days in the calendar view
     for (const week of weeks) {
@@ -200,8 +302,8 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
       }
     }
 
-    // Iterate through events and add them to the map
-    for (const event of events) {
+    // Iterate through the filtered events and add them to the map
+    for (const event of filteredEvents) {
       const start = dayjs(event.start);
       const end = dayjs(event.end);
 
@@ -215,18 +317,20 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
         current = current.add(1, "day");
       }
     }
-    console.timeEnd("[Perf] eventsInMonth calculation");
+    console.log(
+      `[Perf] eventsInMonth calculation took ${
+        Date.now() - eventsInMonthCalculationStart
+      }ms`
+    );
     return map;
-  }, [events, targetDate, weeks]);
+  }, [events, targetDate, weeks, showAdjacentMonths]);
 
   const sortedEvents = React.useCallback(
     (day: dayjs.Dayjs) => {
-      console.time(`[Perf] sortedEvents for ${day.format(SIMPLE_DATE_FORMAT)}`);
+      const sortedEventsStart = Date.now();
       if (!sortedMonthView) {
         const result = eventsInMonth.get(day.format(SIMPLE_DATE_FORMAT)) || [];
-        console.timeEnd(
-          `[Perf] sortedEvents for ${day.format(SIMPLE_DATE_FORMAT)}`
-        );
+        console.log(`[Perf] sortedEvents (unsorted) for ${day.format(SIMPLE_DATE_FORMAT)} took ${Date.now() - sortedEventsStart}ms`);
         return result;
       }
 
@@ -324,9 +428,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
         tmpDay = tmpDay.add(1, "day");
       }
 
-      console.timeEnd(
-        `[Perf] sortedEvents for ${day.format(SIMPLE_DATE_FORMAT)}`
-      );
+      console.log(`[Perf] sortedEvents (sorted) for ${day.format(SIMPLE_DATE_FORMAT)} took ${Date.now() - sortedEventsStart}ms`);
       return finalEvents;
     },
     [eventsInMonth, sortedMonthView]
@@ -359,7 +461,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   };
 
   const renderWeekRow = (week: (number | 0)[], i: number) => {
-    console.time(`[Perf] renderWeekRow ${i}`);
+    const renderWeekRowStart = Date.now();
     const jsx = (
       <View
         style={[
@@ -418,56 +520,29 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   {
                     //Calendar body will re-render after calendarWidth/calendarCellHeight is set from layout event, prevent expensive operation during first render
                     calendarWidth > 0 &&
-                      (!disableMonthEventCellPress || calendarCellHeight > 0) &&
-                      date &&
-                      (() => {
-                        const dayEvents = sortedEvents(date);
-                        const eventsToShow = dayEvents.slice(
-                          0,
-                          maxVisibleEventCount
-                        );
-                        const moreCount =
-                          dayEvents.length - maxVisibleEventCount;
-
-                        return (
-                          <React.Fragment>
-                            {eventsToShow.map((event, index) => (
-                              <CalendarEventForMonthView
-                                key={`${index}-${event.start}-${event.title}-${event.end}`}
-                                event={event}
-                                eventCellStyle={eventCellStyle}
-                                eventCellAccessibilityProps={
-                                  eventCellAccessibilityProps as AccessibilityProps
-                                }
-                                onPressEvent={onPressEvent}
-                                renderEvent={renderEvent}
-                                date={date}
-                                dayOfTheWeek={ii}
-                                calendarWidth={calendarWidth}
-                                isRTL={false}
-                                eventMinHeightForMonthView={
-                                  eventMinHeightForMonthView
-                                }
-                                showAdjacentMonths={showAdjacentMonths}
-                              />
-                            ))}
-                            {moreCount > 0 && (
-                              <Text
-                                key={`more-${date.toString()}`}
-                                style={styles.moreLabelText}
-                                onPress={() =>
-                                  onPressMoreLabel?.(dayEvents, date.toDate())
-                                }
-                              >
-                                {moreLabel.replace(
-                                  "{moreCount}",
-                                  `${moreCount}`
-                                )}
-                              </Text>
-                            )}
-                          </React.Fragment>
-                        );
-                      })()
+                      (!disableMonthEventCellPress ||
+                        calendarCellHeight > 0) &&
+                      date && (
+                        <MemoizedDayEvents
+                          date={date}
+                          sortedEvents={sortedEvents}
+                          maxVisibleEventCount={maxVisibleEventCount}
+                          dayOfTheWeek={ii}
+                          calendarWidth={calendarWidth}
+                          eventMinHeightForMonthView={
+                            eventMinHeightForMonthView
+                          }
+                          showAdjacentMonths={showAdjacentMonths}
+                          moreLabel={moreLabel}
+                          onPressMoreLabel={onPressMoreLabel}
+                          onPressEvent={onPressEvent}
+                          renderEvent={renderEvent}
+                          eventCellStyle={eventCellStyle}
+                          eventCellAccessibilityProps={
+                            eventCellAccessibilityProps as AccessibilityProps
+                          }
+                        />
+                      )
                   }
                 </React.Fragment>
                 {isCellSelected ? (
@@ -480,22 +555,27 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           })}
       </View>
     );
-    console.timeEnd(`[Perf] renderWeekRow ${i}`);
+    console.log(`[Perf] renderWeekRow ${i} took ${Date.now() - renderWeekRowStart}ms`);
     return jsx;
   };
 
-  console.time("[Perf] CalendarBodyForMonthView render");
+  const renderStart = Date.now();
   const result = (
     <View style={[styles.container, style, { height: calendarBodyHeight }]}>
       {(() => {
+        const generationStart = Date.now();
         if (expandedWeek === null) {
-          return weeks.map((week, i) => (
+          console.log("Rendering collapsed view with all weeks.");
+          const weeksJsx = weeks.map((week, i) => (
             <React.Fragment key={`${i}-${week.join("-")}`}>
               {renderWeekRow(week, i)}
             </React.Fragment>
           ));
+          console.log(`Finished generating JSX for collapsed view. Took ${Date.now() - generationStart}ms`);
+          return weeksJsx;
         }
 
+        console.log(`Rendering expanded view for week ${expandedWeek}.`);
         const elements = [];
         elements.push(
           <React.Fragment
@@ -532,11 +612,12 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
             </React.Fragment>
           );
         }
+        console.log(`Finished generating JSX for expanded view. Took ${Date.now() - generationStart}ms`);
         return elements;
       })()}
     </View>
   );
-  console.timeEnd("[Perf] CalendarBodyForMonthView render");
+  console.log(`[Perf] CalendarBodyForMonthView render took ${Date.now() - renderStart}ms`);
   return result;
 }
 
