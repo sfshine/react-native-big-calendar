@@ -125,13 +125,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   );
 
   const handleDayPress = (date: dayjs.Dayjs, weekIndex: number) => {
-    if (
-      Platform.OS === "android" &&
-      UIManager.setLayoutAnimationEnabledExperimental
-    ) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     if (selectedDate && selectedDate.isSame(date, "day")) {
       setSelectedDate(null);
       setExpandedWeek(null);
@@ -144,7 +137,9 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   };
 
   const handleDateChange = (newDate: dayjs.Dayjs) => {
-    setSelectedDate(newDate);
+    if (!newDate.isSame(selectedDate, "day")) {
+      setSelectedDate(newDate);
+    }
   };
 
   // 计算展开周的所有日期
