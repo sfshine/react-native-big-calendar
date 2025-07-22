@@ -45,7 +45,7 @@ export default memo(function MonthCalendarPager({
 }: MonthCalendarPagerProps) {
   const [isEventExpanded, setIsEventExpanded] = useState(false);
   const { height, width } = useWindowDimensions();
-  const calendarBodyHeight = 600;
+  const calendarBodyHeight = height * 0.8;
 
   const pageCount = 12; // For month view, we can have a fixed number of pages
   const initialPage = 6; // Centered around the baseDate
@@ -80,6 +80,16 @@ export default memo(function MonthCalendarPager({
           return <View key={page.key} style={styles.pageContainer} />;
         }
 
+        const eventsForMonth = allEvents.filter((event) => {
+          const eventStart = dayjs(event.start);
+          const eventEnd = dayjs(event.end);
+          const pageStart = page.date.startOf('month');
+          const pageEnd = page.date.endOf('month');
+
+          // Check if the event overlaps with the current month
+          return eventStart.isBefore(pageEnd) && eventEnd.isAfter(pageStart);
+        });
+
         return (
           <View key={page.key} style={styles.pageContainer}>
             <CalendarHeaderForMonthView
@@ -94,7 +104,7 @@ export default memo(function MonthCalendarPager({
             />
             <CalendarBodyForMonthView
               targetDate={page.date}
-              events={allEvents}
+              events={eventsForMonth}
               style={{ height: calendarBodyHeight }}
               maxVisibleEventCount={3}
               weekStartsOn={0} // Sunday
