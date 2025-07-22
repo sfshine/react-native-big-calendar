@@ -44,7 +44,7 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   // 当选中日期改变时，切换到对应的页面
   React.useEffect(() => {
     if (selectedIndex >= 0 && selectedIndex !== currentPageIndex.current) {
-      // 使用 requestAnimationFrame 确保在下一个渲染周期执行
+      // 使用 requestAnimationFrame 确保在下一个渲染周期执行, 避免 iOS 展开下周日程列表时不显示问题
       requestAnimationFrame(() => {
         if (pagerRef.current) {
           isSettingPageProgrammatically.current = true;
