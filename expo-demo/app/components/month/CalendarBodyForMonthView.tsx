@@ -5,7 +5,6 @@ import {
   LayoutAnimation,
   Platform,
   Text,
-  TouchableOpacity,
   UIManager,
   View,
   type ViewStyle,
@@ -30,6 +29,7 @@ import {
 import { styles } from "./CalendarBodyForMonthView.styles";
 import { CalendarEventForMonthView } from "./dayevent/CalendarEventForMonthView";
 import { DayEventsListPager } from "./dayevent/DayEventsListPager";
+import { BWTouchableOpacity as TouchableOpacity } from "../../BWTouchableOpacity";
 
 dayjs.extend(duration);
 dayjs.extend(isoWeek);
@@ -96,15 +96,25 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   calendarWidth,
   calendarBodyHeight,
 }: CalendarBodyForMonthViewProps<T>) {
+  const renderCount = React.useRef(0);
+  React.useEffect(() => {
+    renderCount.current += 1;
+    console.log(
+      `[Perf] CalendarBodyForMonthView render count: ${renderCount.current}`
+    );
+  });
+
   const { now } = useNow(!hideNowIndicator);
   const [selectedDate, setSelectedDate] = React.useState<dayjs.Dayjs | null>(
     null
   );
   const [expandedWeek, setExpandedWeek] = React.useState<number | null>(null);
 
+  console.time("[Perf] weeks calculation");
   const weeks = showAdjacentMonths
     ? getWeeksWithAdjacentMonths(targetDate, weekStartsOn)
     : calendarize(targetDate.toDate(), weekStartsOn);
+  console.timeEnd("[Perf] weeks calculation");
 
   const calendarCellHeight = calendarBodyHeight / weeks.length;
 
@@ -125,12 +135,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   );
 
   const handleDayPress = (date: dayjs.Dayjs, weekIndex: number) => {
-    if (Platform.OS === "android") {
-      if (UIManager.setLayoutAnimationEnabledExperimental) {
-        UIManager.setLayoutAnimationEnabledExperimental(true);
-      }
-    }
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     if (selectedDate && selectedDate.isSame(date, "day")) {
       setSelectedDate(null);
       setExpandedWeek(null);
@@ -178,12 +182,16 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   }, [expandedWeek, weeks, targetDate, showAdjacentMonths]);
 
   const eventsInMonth = React.useMemo(() => {
+    console.time("[Perf] eventsInMonth calculation");
     const map = new Map<string, T[]>();
+
+    // Initialize map with all days in the calendar view
     for (const week of weeks) {
       for (const day of week) {
         if (day === 0) {
           continue;
         }
+        // TODO: This date calculation might be incorrect for adjacent months.
         const date = targetDate.date(day);
         const dayStr = date.format(SIMPLE_DATE_FORMAT);
         if (!map.has(dayStr)) {
@@ -192,25 +200,34 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
       }
     }
 
+    // Iterate through events and add them to the map
     for (const event of events) {
       const start = dayjs(event.start);
       const end = dayjs(event.end);
-      for (const dayStr of map.keys()) {
-        const date = dayjs(dayStr);
-        if (
-          date.isBetween(start.startOf("day"), end.endOf("day"), null, "[)")
-        ) {
+
+      // Iterate from start to end date of the event
+      let current = start.startOf("day");
+      while (current.isBefore(end)) {
+        const dayStr = current.format(SIMPLE_DATE_FORMAT);
+        if (map.has(dayStr)) {
           map.get(dayStr)?.push(event);
         }
+        current = current.add(1, "day");
       }
     }
+    console.timeEnd("[Perf] eventsInMonth calculation");
     return map;
   }, [events, targetDate, weeks]);
 
   const sortedEvents = React.useCallback(
     (day: dayjs.Dayjs) => {
+      console.time(`[Perf] sortedEvents for ${day.format(SIMPLE_DATE_FORMAT)}`);
       if (!sortedMonthView) {
-        return eventsInMonth.get(day.format(SIMPLE_DATE_FORMAT)) || [];
+        const result = eventsInMonth.get(day.format(SIMPLE_DATE_FORMAT)) || [];
+        console.timeEnd(
+          `[Perf] sortedEvents for ${day.format(SIMPLE_DATE_FORMAT)}`
+        );
+        return result;
       }
 
       /**
@@ -307,6 +324,9 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
         tmpDay = tmpDay.add(1, "day");
       }
 
+      console.timeEnd(
+        `[Perf] sortedEvents for ${day.format(SIMPLE_DATE_FORMAT)}`
+      );
       return finalEvents;
     },
     [eventsInMonth, sortedMonthView]
@@ -339,7 +359,8 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   };
 
   const renderWeekRow = (week: (number | 0)[], i: number) => {
-    return (
+    console.time(`[Perf] renderWeekRow ${i}`);
+    const jsx = (
       <View
         style={[
           styles.weekRow,
@@ -459,9 +480,12 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           })}
       </View>
     );
+    console.timeEnd(`[Perf] renderWeekRow ${i}`);
+    return jsx;
   };
 
-  return (
+  console.time("[Perf] CalendarBodyForMonthView render");
+  const result = (
     <View style={[styles.container, style, { height: calendarBodyHeight }]}>
       {(() => {
         if (expandedWeek === null) {
@@ -512,6 +536,8 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
       })()}
     </View>
   );
+  console.timeEnd("[Perf] CalendarBodyForMonthView render");
+  return result;
 }
 
 export const CalendarBodyForMonthView = typedMemo(_CalendarBodyForMonthView);
