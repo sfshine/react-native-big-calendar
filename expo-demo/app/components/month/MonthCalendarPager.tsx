@@ -64,54 +64,52 @@ export default memo(function MonthCalendarPager({
   };
 
   return (
-    <View style={styles.pagerView}>
-      <PagerView
-        offscreenPageLimit={offscreenPageLimit}
-        ref={pagerRef}
-        style={styles.pagerView}
-        initialPage={initialPage}
-        onPageSelected={onPageSelected}
-        scrollEnabled={!isEventExpanded}
-      >
-        {pages.map((page, index) => {
-          const isPageCached =
-            Math.abs(index - currentPageIndex) <= offscreenPageLimit;
+    <PagerView
+      offscreenPageLimit={offscreenPageLimit}
+      ref={pagerRef}
+      style={[styles.pagerView, { height: calendarBodyHeight }]}
+      initialPage={initialPage}
+      onPageSelected={onPageSelected}
+      scrollEnabled={!isEventExpanded}
+    >
+      {pages.map((page, index) => {
+        const isPageCached =
+          Math.abs(index - currentPageIndex) <= offscreenPageLimit;
 
-          if (!isPageCached) {
-            return <View key={page.key} style={styles.pageContainer} />;
-          }
+        if (!isPageCached) {
+          return <View key={page.key} style={styles.pageContainer} />;
+        }
 
-          return (
-            <View key={page.key} style={styles.pageContainer}>
-              <CalendarHeaderForMonthView
-                dateRange={getDatesInMonth(page.date)}
-                style={styles.headerComponent}
-                locale="en"
-                weekStartsOn={0}
-                showWeekNumber={false}
-                weekNumberPrefix=""
-                headerContainerAccessibilityProps={{}}
-                headerCellAccessibilityProps={{}}
-              />
-              <CalendarBodyForMonthView
-                targetDate={page.date}
-                events={allEvents}
-                style={styles.calendarBody}
-                maxVisibleEventCount={3}
-                weekStartsOn={0} // Sunday
-                eventMinHeightForMonthView={20}
-                moreLabel={"{moreCount} More"}
-                showAdjacentMonths={true}
-                sortedMonthView={true}
-                onExpandedStateChange={setIsEventExpanded}
-                calendarWidth={width}
-                calendarBodyHeight={calendarBodyHeight}
-              />
-            </View>
-          );
-        })}
-      </PagerView>
-    </View>
+        return (
+          <View key={page.key} style={styles.pageContainer}>
+            <CalendarHeaderForMonthView
+              dateRange={getDatesInMonth(page.date)}
+              style={styles.headerComponent}
+              locale="en"
+              weekStartsOn={0}
+              showWeekNumber={false}
+              weekNumberPrefix=""
+              headerContainerAccessibilityProps={{}}
+              headerCellAccessibilityProps={{}}
+            />
+            <CalendarBodyForMonthView
+              targetDate={page.date}
+              events={allEvents}
+              style={{ height: calendarBodyHeight }}
+              maxVisibleEventCount={3}
+              weekStartsOn={0} // Sunday
+              eventMinHeightForMonthView={20}
+              moreLabel={"{moreCount} More"}
+              showAdjacentMonths={true}
+              sortedMonthView={true}
+              onExpandedStateChange={setIsEventExpanded}
+              calendarWidth={width}
+              calendarBodyHeight={calendarBodyHeight}
+            />
+          </View>
+        );
+      })}
+    </PagerView>
   );
 });
 
@@ -129,9 +127,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   pageContainer: {
-    flex: 1,
-  },
-  calendarBody: {
     flex: 1,
   },
   headerComponent: {
