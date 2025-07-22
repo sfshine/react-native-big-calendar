@@ -28,7 +28,7 @@ import {
   useNow,
 } from "react-native-big-calendar";
 import { styles } from "./CalendarBodyForMonthView.styles";
-import { CalendarEventForMonthView } from "./CalendarEventForMonthView";
+import { CalendarEventForMonthView } from "./dayevent/CalendarEventForMonthView";
 import { DayEventsListPager } from "./dayevent/DayEventsListPager";
 
 dayjs.extend(duration);
@@ -61,6 +61,7 @@ interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
   showWeekNumber?: boolean;
   renderCustomDateForMonth?: (date: Date) => React.ReactElement | null;
   disableMonthEventCellPress?: boolean;
+  onExpandedStateChange?: (isExpanded: boolean) => void;
 }
 
 function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
@@ -89,6 +90,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   showWeekNumber = false,
   renderCustomDateForMonth,
   disableMonthEventCellPress,
+  onExpandedStateChange,
 }: CalendarBodyForMonthViewProps<T>) {
   const { now } = useNow(!hideNowIndicator);
   const [calendarWidth, setCalendarWidth] = React.useState<number>(0);
@@ -129,9 +131,11 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     if (selectedDate && selectedDate.isSame(date, "day")) {
       setSelectedDate(null);
       setExpandedWeek(null);
+      onExpandedStateChange?.(false);
     } else {
       setSelectedDate(date);
       setExpandedWeek(weekIndex);
+      onExpandedStateChange?.(true);
     }
   };
 

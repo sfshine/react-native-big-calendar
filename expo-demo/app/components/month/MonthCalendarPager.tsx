@@ -44,10 +44,11 @@ export default memo(function MonthCalendarPager({
   pagerRef,
 }: MonthCalendarPagerProps) {
   const { height } = useWindowDimensions();
+  const [isEventExpanded, setIsEventExpanded] = useState(false);
 
   const pageCount = 12; // For month view, we can have a fixed number of pages
   const initialPage = 6; // Centered around the baseDate
-  const offscreenPageLimit = 1;
+  const offscreenPageLimit = 3;
 
   const pages = useMemo(() => {
     return Array.from({ length: pageCount }, (_, index) => {
@@ -77,6 +78,7 @@ export default memo(function MonthCalendarPager({
         style={styles.pagerView}
         initialPage={initialPage}
         onPageSelected={onPageSelected}
+        scrollEnabled={!isEventExpanded}
       >
         {pages.map((page, index) => {
           const isPageCached =
@@ -108,6 +110,7 @@ export default memo(function MonthCalendarPager({
                 moreLabel={"{moreCount} More"}
                 showAdjacentMonths={true}
                 sortedMonthView={true}
+                onExpandedStateChange={setIsEventExpanded}
               />
             </View>
           );
