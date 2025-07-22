@@ -102,7 +102,36 @@ function _MemoizedDayEvents<T extends ICalendarEventBase>({
   );
 }
 
-const MemoizedDayEvents = typedMemo(_MemoizedDayEvents);
+const areEventsEqual = <T extends ICalendarEventBase>(
+  prev: Readonly<MemoizedDayEventsProps<T>>,
+  next: Readonly<MemoizedDayEventsProps<T>>
+) => {
+  if (!prev.date.isSame(next.date, "day")) {
+    return false;
+  }
+  return (
+    prev.sortedEvents === next.sortedEvents &&
+    prev.maxVisibleEventCount === next.maxVisibleEventCount &&
+    prev.dayOfTheWeek === next.dayOfTheWeek &&
+    prev.calendarWidth === next.calendarWidth &&
+    prev.eventMinHeightForMonthView === next.eventMinHeightForMonthView &&
+    prev.showAdjacentMonths === next.showAdjacentMonths &&
+    prev.moreLabel === next.moreLabel &&
+    prev.onPressMoreLabel === next.onPressMoreLabel &&
+    prev.onPressEvent === next.onPressEvent &&
+    prev.renderEvent === next.renderEvent &&
+    prev.eventCellStyle === next.eventCellStyle &&
+    Object.is(
+      prev.eventCellAccessibilityProps,
+      next.eventCellAccessibilityProps
+    )
+  );
+};
+
+const MemoizedDayEvents = React.memo(
+  _MemoizedDayEvents,
+  areEventsEqual
+) as typeof _MemoizedDayEvents;
 
 interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
   targetDate: dayjs.Dayjs;
@@ -539,7 +568,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                           renderEvent={renderEvent}
                           eventCellStyle={eventCellStyle}
                           eventCellAccessibilityProps={
-                            eventCellAccessibilityProps as AccessibilityProps
+                            eventCellAccessibilityProps
                           }
                         />
                       )
