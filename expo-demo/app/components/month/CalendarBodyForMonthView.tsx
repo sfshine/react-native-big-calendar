@@ -30,7 +30,7 @@ import {
 import { styles } from "./CalendarBodyForMonthView.styles";
 import { CalendarEventForMonthView } from "./CalendarEventForMonthView";
 import { DayEventsList } from "./DayEventsList";
-import { DayEventsListPager } from "./DayEventsListPager";
+import { DayEventsListPager } from "./dayevent/DayEventsListPager";
 
 dayjs.extend(duration);
 dayjs.extend(isoWeek);

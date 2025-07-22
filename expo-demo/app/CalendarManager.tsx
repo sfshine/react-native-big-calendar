@@ -23,8 +23,8 @@ import {
 import { events as eventList } from "../events";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BWTouchableOpacity } from "./BWTouchableOpacity";
-import MonthCalendarPager from "./components/MonthCalendarPager";
-import DaysCalendarPager from "./components/DaysCalendarPager";
+import MonthCalendarPager from "./components/month/MonthCalendarPager";
+import DaysCalendarPager from "./components/days/DaysCalendarPager";
 import { fail } from "node:assert";
 
 // Dummy events, can be shared
