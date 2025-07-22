@@ -43,7 +43,7 @@ export default memo(function MonthCalendarPager({
   setCurrentPageIndex,
   pagerRef,
 }: MonthCalendarPagerProps) {
-  const [isEventExpanded, setIsEventExpanded] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const { height, width } = useWindowDimensions();
   const calendarBodyHeight = height * 0.8;
 
@@ -62,6 +62,16 @@ export default memo(function MonthCalendarPager({
     const position = event.nativeEvent.position;
     setCurrentPageIndex(position);
   };
+
+  const handleDateSelect = (date: Dayjs) => {
+    if (selectedDate && selectedDate.isSame(date, "day")) {
+      setSelectedDate(null);
+    } else {
+      setSelectedDate(date);
+    }
+  };
+
+  const isEventExpanded = !!selectedDate;
 
   return (
     <PagerView
@@ -112,7 +122,8 @@ export default memo(function MonthCalendarPager({
               moreLabel={"{moreCount} More"}
               showAdjacentMonths={true}
               sortedMonthView={true}
-              onExpandedStateChange={setIsEventExpanded}
+              selectedDate={selectedDate}
+              onDateSelect={handleDateSelect}
               calendarWidth={width}
               calendarBodyHeight={calendarBodyHeight}
             />
