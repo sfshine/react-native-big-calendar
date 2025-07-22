@@ -95,10 +95,15 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   const { now } = useNow(!hideNowIndicator);
   const [calendarWidth, setCalendarWidth] = React.useState<number>(0);
   const [calendarCellHeight, setCalendarCellHeight] = React.useState<number>(0);
-  const [selectedDate, setSelectedDate] = React.useState<dayjs.Dayjs | null>(
-    null
-  );
-  const [expandedWeek, setExpandedWeek] = React.useState<number | null>(null);
+  const [selectionState, setSelectionState] = React.useState<{
+    selectedDate: dayjs.Dayjs | null;
+    expandedWeek: number | null;
+  }>({
+    selectedDate: null,
+    expandedWeek: null,
+  });
+
+  const { selectedDate, expandedWeek } = selectionState;
 
   const weeks = showAdjacentMonths
     ? getWeeksWithAdjacentMonths(targetDate, weekStartsOn)
@@ -129,28 +134,45 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     }
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     if (selectedDate && selectedDate.isSame(date, "day")) {
-      setSelectedDate(null);
-      setExpandedWeek(null);
+      console.log("🔄 Collapsing - setting state to null");
+      setSelectionState({
+        selectedDate: null,
+        expandedWeek: null,
+      });
       onExpandedStateChange?.(false);
     } else {
-      setSelectedDate(date);
-      setExpandedWeek(weekIndex);
+      console.log("🔄 Expanding - setting state:", {
+        selectedDate: date.format(),
+        expandedWeek: weekIndex,
+      });
+      setSelectionState({
+        selectedDate: date,
+        expandedWeek: weekIndex,
+      });
       onExpandedStateChange?.(true);
     }
   };
 
   const handleDateChange = (newDate: dayjs.Dayjs) => {
-    setSelectedDate(newDate);
+    console.log("🔄 Date change from PagerView:", newDate.format());
+    setSelectionState(prev => ({
+      ...prev,
+      selectedDate: newDate,
+    }));
   };
 
   // 计算展开周的所有日期
   const weekDates = React.useMemo(() => {
+    console.log("📊 Calculating weekDates with expandedWeek:", expandedWeek);
+    console.log("📊 weeks array:", weeks);
     if (expandedWeek === null) return [];
 
     const week = weeks[expandedWeek];
+    console.log("📊 Selected week:", week, "at index:", expandedWeek);
+    
     if (showAdjacentMonths) {
       // 处理相邻月份的日期
-      return week.map((d) => {
+      const result = week.map((d) => {
         if (d <= 0) {
           // 前一个月的日期
           return targetDate.add(-1, "month").endOf("month").add(d, "day");
@@ -162,13 +184,17 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           return targetDate.date(d);
         }
       });
+      console.log("📊 Final weekDates:", result.map(d => d.format("YYYY-MM-DD")));
+      return result;
     } else {
       // 不显示相邻月份时，只显示当前月份的日期
-      return week
+      const result = week
         .map((d) =>
           d > 0 && d <= targetDate.daysInMonth() ? targetDate.date(d) : null
         )
         .filter((date): date is dayjs.Dayjs => date !== null);
+      console.log("📊 Final weekDates (filtered):", result.map(d => d.format("YYYY-MM-DD")));
+      return result;
     }
   }, [expandedWeek, weeks, targetDate, showAdjacentMonths]);
 
