@@ -2,14 +2,13 @@ import calendarize from "calendarize";
 import * as React from "react";
 import {
   type AccessibilityProps,
-  LayoutAnimation,
   Platform,
   Text,
-  TouchableOpacity,
-  UIManager,
   View,
   type ViewStyle,
 } from "react-native";
+
+import { BWTouchableOpacity as TouchableOpacity } from "../../BWTouchableOpacity";
 
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
@@ -171,17 +170,40 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     }
   }, [expandedWeek, weeks, targetDate, showAdjacentMonths]);
 
+  const eventsInMonth = React.useMemo(() => {
+    const map = new Map<string, T[]>();
+    for (const week of weeks) {
+      for (const day of week) {
+        if (day === 0) {
+          continue;
+        }
+        const date = targetDate.date(day);
+        const dayStr = date.format(SIMPLE_DATE_FORMAT);
+        if (!map.has(dayStr)) {
+          map.set(dayStr, []);
+        }
+      }
+    }
+
+    for (const event of events) {
+      const start = dayjs(event.start);
+      const end = dayjs(event.end);
+      for (const dayStr of map.keys()) {
+        const date = dayjs(dayStr);
+        if (
+          date.isBetween(start.startOf("day"), end.endOf("day"), null, "[)")
+        ) {
+          map.get(dayStr)?.push(event);
+        }
+      }
+    }
+    return map;
+  }, [events, targetDate, weeks]);
+
   const sortedEvents = React.useCallback(
     (day: dayjs.Dayjs) => {
       if (!sortedMonthView) {
-        return events.filter(({ start, end }) =>
-          day.isBetween(
-            dayjs(start).startOf("day"),
-            dayjs(end).endOf("day"),
-            null,
-            "[)"
-          )
-        );
+        return eventsInMonth.get(day.format(SIMPLE_DATE_FORMAT)) || [];
       }
 
       /**
@@ -198,7 +220,9 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
       const max = day.endOf("day");
 
       //filter all events that starts from the current week until the current day, and sort them by reverse starting time
-      let filteredEvents = events
+      let filteredEvents = (
+        eventsInMonth.get(day.format(SIMPLE_DATE_FORMAT)) || []
+      )
         .filter(
           ({ start, end }) =>
             dayjs(end).isAfter(day.startOf("week")) &&
@@ -278,7 +302,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
 
       return finalEvents;
     },
-    [events, sortedMonthView]
+    [eventsInMonth, sortedMonthView]
   );
 
   const renderDateCell = (date: dayjs.Dayjs | null, index: number) => {
