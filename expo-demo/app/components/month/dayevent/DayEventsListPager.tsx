@@ -28,39 +28,58 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   onDateChange,
   style,
 }: DayEventsListPagerProps<T>) {
+  console.log(`[Render] selectedDate: ${selectedDate.format()}`);
   const pagerRef = React.useRef<PagerView>(null);
-  const isProgrammaticScroll = React.useRef(false);
+  const isUserDragging = React.useRef(false);
   const currentPage = React.useRef(
-    weekDates.findIndex((d) => d.isSame(selectedDate, "day"))
+    weekDates.findIndex((d) => d.isSame(selectedDate, 'day')),
   );
 
   const selectedIndex = React.useMemo(
-    () => weekDates.findIndex((date) => date.isSame(selectedDate, "day")),
-    [weekDates, selectedDate]
+    () => weekDates.findIndex((date) => date.isSame(selectedDate, 'day')),
+    [weekDates, selectedDate],
   );
 
   React.useEffect(() => {
+    console.log(
+      `[useEffect] selectedIndex: ${selectedIndex}, currentPage: ${currentPage.current}`,
+    );
     if (
       selectedIndex >= 0 &&
       selectedIndex !== currentPage.current &&
       pagerRef.current
     ) {
-      isProgrammaticScroll.current = true;
+      console.log(`[useEffect] Setting page programmatically to: ${selectedIndex}`);
+      // No flag needed here, we detect user scrolls via the 'dragging' state
       pagerRef.current.setPage(selectedIndex);
     }
   }, [selectedIndex]);
 
-  const handlePageScrollStateChanged = (e: PageScrollStateChangedNativeEvent) => {
-    if (e.nativeEvent.pageScrollState === "idle") {
-      isProgrammaticScroll.current = false;
+  const handlePageScrollStateChanged = (
+    e: PageScrollStateChangedNativeEvent,
+  ) => {
+    const { pageScrollState } = e.nativeEvent;
+    console.log(`[PageScrollState] State: ${pageScrollState}`);
+
+    if (pageScrollState === 'dragging') {
+      console.log('[PageScrollState] User is dragging.');
+      isUserDragging.current = true;
+    } else if (pageScrollState === 'idle') {
+      console.log('[PageScrollState] Scroll is idle, resetting drag flag.');
+      isUserDragging.current = false;
     }
   };
 
   const handlePageSelected = (e: PagerViewOnPageSelectedEvent) => {
     const newIndex = e.nativeEvent.position;
     currentPage.current = newIndex;
+    console.log(
+      `[PageSelected] Index: ${newIndex}, isUserDragging: ${isUserDragging.current}`,
+    );
 
-    if (isProgrammaticScroll.current) {
+    // Only fire the change if it was initiated by the user dragging the pager.
+    if (!isUserDragging.current) {
+      console.log('[PageSelected] Ignoring non-user scroll.');
       return;
     }
 
@@ -69,6 +88,7 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
       newIndex < weekDates.length &&
       !weekDates[newIndex].isSame(selectedDate)
     ) {
+      console.log(`[PageSelected] Firing onDateChange for index: ${newIndex}`);
       onDateChange?.(weekDates[newIndex]);
     }
   };
