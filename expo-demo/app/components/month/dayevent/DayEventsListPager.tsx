@@ -30,14 +30,38 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
 }: DayEventsListPagerProps<T>) {
   const pagerRef = React.useRef<PagerView>(null);
   const isUserDragging = React.useRef(false);
-  const currentPage = React.useRef(
-    weekDates.findIndex((d) => d.isSame(selectedDate, "day"))
-  );
 
   const selectedIndex = React.useMemo(
     () => weekDates.findIndex((date) => date.isSame(selectedDate, "day")),
-    [weekDates, selectedDate]
+    [weekDates, selectedDate],
   );
+
+  const initialPage = selectedIndex > -1 ? selectedIndex : 0;
+  const [activePage, setActivePage] = React.useState(initialPage);
+  const currentPage = React.useRef(initialPage);
+
+  const eventsByDate = React.useMemo(() => {
+    const grouped = new Map<string, T[]>();
+    for (const date of weekDates) {
+      const dayEvents = events.filter(({ start, end }) =>
+        date.isBetween(
+          dayjs(start).startOf("day"),
+          dayjs(end).endOf("day"),
+          null,
+          "[)",
+        ),
+      );
+      grouped.set(date.format("YYYY-MM-DD"), dayEvents);
+    }
+    return grouped;
+  }, [events, weekDates]);
+
+  React.useEffect(() => {
+    // Sync active page with selected date from props
+    if (selectedIndex > -1) {
+      setActivePage(selectedIndex);
+    }
+  }, [selectedIndex]);
 
   React.useEffect(() => {
     if (
@@ -51,7 +75,7 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   }, [selectedIndex]);
 
   const handlePageScrollStateChanged = (
-    e: PageScrollStateChangedNativeEvent
+    e: PageScrollStateChangedNativeEvent,
   ) => {
     const { pageScrollState } = e.nativeEvent;
 
@@ -65,6 +89,7 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   const handlePageSelected = (e: PagerViewOnPageSelectedEvent) => {
     const newIndex = e.nativeEvent.position;
     currentPage.current = newIndex;
+    setActivePage(newIndex);
 
     // Only fire the change if it was initiated by the user dragging the pager.
     if (!isUserDragging.current) {
@@ -80,46 +105,40 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
     }
   };
 
-  const renderDayEvents = (date: dayjs.Dayjs) => {
-    const dayEvents = events.filter(({ start, end }) =>
-      date.isBetween(
-        dayjs(start).startOf("day"),
-        dayjs(end).endOf("day"),
-        null,
-        "[)"
-      )
-    );
+  const renderDayEvents = React.useCallback(
+    (date: dayjs.Dayjs) => {
+      const dayEvents = eventsByDate.get(date.format("YYYY-MM-DD")) || [];
 
-    const renderItem = ({ item }: { item: T }) => (
-      <View style={styles.eventItem}>
-        <Text style={styles.eventTitle}>{item.title}</Text>
-        <Text style={styles.eventTime}>
-          {dayjs(item.start).format("HH:mm")} -{" "}
-          {dayjs(item.end).format("HH:mm")}
-        </Text>
-      </View>
-    );
+      const renderItem = ({ item }: { item: T }) => (
+        <View style={styles.eventItem}>
+          <Text style={styles.eventTitle}>{item.title}</Text>
+          <Text style={styles.eventTime}>
+            {dayjs(item.start).format("HH:mm")} -{" "}
+            {dayjs(item.end).format("HH:mm")}
+          </Text>
+        </View>
+      );
 
-    return (
-      <View style={{ flex: 1, backgroundColor: "yellow" }}>
-        {dayEvents.length > 0 ? (
-          <FlatList
-            data={dayEvents}
-            renderItem={renderItem}
-            keyExtractor={(item) => `${item.start}-${item.title}`}
-            style={styles.flatList}
-            showsVerticalScrollIndicator={false}
-          />
-        ) : (
-          <View style={styles.noEvents}>
-            <Text style={styles.noEventsText}>No Events</Text>
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  const initialPage = selectedIndex > -1 ? selectedIndex : 0;
+      return (
+        <View style={{ flex: 1, backgroundColor: "yellow" }}>
+          {dayEvents.length > 0 ? (
+            <FlatList
+              data={dayEvents}
+              renderItem={renderItem}
+              keyExtractor={(item) => `${item.start}-${item.title}`}
+              style={styles.flatList}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <View style={styles.noEvents}>
+              <Text style={styles.noEventsText}>No Events</Text>
+            </View>
+          )}
+        </View>
+      );
+    },
+    [eventsByDate],
+  );
 
   return (
     <View style={[style, { backgroundColor: "green" }]}>
@@ -131,11 +150,14 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
         onPageScrollStateChanged={handlePageScrollStateChanged}
         key={weekDates.map((d) => d.format("YYYY-MM-DD")).join("-")}
       >
-        {weekDates.map((date) => (
-          <View key={date.format("YYYY-MM-DD")} style={{ flex: 1 }}>
-            {renderDayEvents(date)}
-          </View>
-        ))}
+        {weekDates.map((date, index) => {
+          const isPageActive = Math.abs(activePage - index) <= 1;
+          return (
+            <View key={date.format("YYYY-MM-DD")} style={{ flex: 1 }}>
+              {isPageActive ? renderDayEvents(date) : <View />}
+            </View>
+          );
+        })}
       </PagerView>
     </View>
   );
