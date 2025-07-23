@@ -10,7 +10,6 @@ interface MonthCalendarPagerProps {
   allEvents: ICalendarEventBase[];
   currentPageIndex: number;
   setCurrentPageIndex: (index: number) => void;
-  pagerRef: React.RefObject<PagerView>;
   minDate: Dayjs;
   maxDate: Dayjs;
 }
@@ -39,13 +38,20 @@ export default memo(function MonthCalendarPager({
   allEvents,
   currentPageIndex,
   setCurrentPageIndex,
-  pagerRef,
   minDate,
   maxDate,
 }: MonthCalendarPagerProps) {
   const [isEventExpanded, setIsEventExpanded] = useState(false);
   const { height, width } = useWindowDimensions();
   const calendarBodyHeight = height * 0.8;
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const { pageCount, initialPage } = useMemo(() => {
     const start = minDate.startOf('month');
@@ -67,14 +73,15 @@ export default memo(function MonthCalendarPager({
   }, [minDate, pageCount]);
 
   const onPageSelected = (event: any) => {
-    const position = event.nativeEvent.position;
-    setCurrentPageIndex(position);
+    if (isMounted.current) {
+      const position = event.nativeEvent.position;
+      setCurrentPageIndex(position);
+    }
   };
 
   return (
     <PagerView
       offscreenPageLimit={offscreenPageLimit}
-      ref={pagerRef}
       style={[styles.pagerView, { height: calendarBodyHeight }]}
       initialPage={currentPageIndex}
       onPageSelected={onPageSelected}

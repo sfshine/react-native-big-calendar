@@ -14,7 +14,6 @@ interface DaysCalendarPagerProps {
   allEvents: ICalendarEventBase[];
   currentPageIndex: number;
   setCurrentPageIndex: (index: number) => void;
-  pagerRef: React.RefObject<PagerView>;
   viewMode: ViewMode;
   minDate: Dayjs;
   maxDate: Dayjs;
@@ -33,12 +32,20 @@ export default memo(function DaysCalendarPager({
   allEvents,
   currentPageIndex,
   setCurrentPageIndex,
-  pagerRef,
   viewMode,
   minDate,
   maxDate,
 }: DaysCalendarPagerProps) {
   const { height } = useWindowDimensions();
+  const calendarBodyHeight = height - 120; // Adjust as needed
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const { pageCount, initialPage } = useMemo(() => {
     if (viewMode === 'day') {
@@ -125,60 +132,58 @@ export default memo(function DaysCalendarPager({
   const scrollOffsetMinutes = 480; // 8:00 AM
 
   const onPageSelected = (event: any) => {
-    const position = event.nativeEvent.position;
-    console.log(`[DaysCalendarPager] onPageSelected: position=${position}`);
-    setCurrentPageIndex(position);
+    if (isMounted.current) {
+      const position = event.nativeEvent.position;
+      console.log(`[DaysCalendarPager] onPageSelected: position=${position}`);
+      setCurrentPageIndex(position);
+    }
   };
 
   return (
-    <>
-      <PagerView
-        offscreenPageLimit={3}
-        ref={pagerRef}
-        style={styles.pagerView}
-        initialPage={currentPageIndex}
-        key={`${viewMode}-${minDate.toString()}-${maxDate.toString()}`}
-        onPageSelected={onPageSelected}
-      >
-        {pages.map((page, index) => {
-          const dateRange: Dayjs[] = page.dateRange;
-          const isPageCached =
-            Math.abs(index - currentPageIndex) <= offscreenPageLimit;
+    <PagerView
+      offscreenPageLimit={offscreenPageLimit}
+      style={[styles.pagerView, { height: calendarBodyHeight }]}
+      initialPage={currentPageIndex}
+      onPageSelected={onPageSelected}
+    >
+      {pages.map((page, index) => {
+        const dateRange: Dayjs[] = page.dateRange;
+        const isPageCached =
+          Math.abs(index - currentPageIndex) <= offscreenPageLimit;
 
-          if (!isPageCached) {
-            return <View key={page.key} style={styles.pageContainer} />;
-          }
+        if (!isPageCached) {
+          return <View key={page.key} style={styles.pageContainer} />;
+        }
 
-          return (
-            <View key={page.key} style={styles.pageContainer}>
-              <CalendarHeader
-                dateRange={dateRange}
-                cellHeight={cellHeight}
-                locale="en"
-                style={styles.headerComponent}
-                allDayEvents={allDayEvents}
-                showAllDayEventCell={true}
-                allDayEventCellStyle={{}}
-                allDayEventCellTextColor=""
-              />
-              <CalendarBody
-                cellHeight={cellHeight}
-                containerHeight={containerHeight}
-                dateRange={dateRange}
-                events={daytimeEvents}
-                scrollOffsetMinutes={scrollOffsetMinutes}
-                ampm={false}
-                showTime={true}
-                style={styles.calendarBody}
-                hideNowIndicator={false}
-                overlapOffset={20}
-                isEventOrderingEnabled={true}
-              />
-            </View>
-          );
-        })}
-      </PagerView>
-    </>
+        return (
+          <View key={page.key} style={styles.pageContainer}>
+            <CalendarHeader
+              dateRange={dateRange}
+              cellHeight={cellHeight}
+              locale="en"
+              style={styles.headerComponent}
+              allDayEvents={allDayEvents}
+              showAllDayEventCell={true}
+              allDayEventCellStyle={{}}
+              allDayEventCellTextColor=""
+            />
+            <CalendarBody
+              cellHeight={cellHeight}
+              containerHeight={containerHeight}
+              dateRange={dateRange}
+              events={daytimeEvents}
+              scrollOffsetMinutes={scrollOffsetMinutes}
+              ampm={false}
+              showTime={true}
+              style={styles.calendarBody}
+              hideNowIndicator={false}
+              overlapOffset={20}
+              isEventOrderingEnabled={true}
+            />
+          </View>
+        );
+      })}
+    </PagerView>
   );
 });
 

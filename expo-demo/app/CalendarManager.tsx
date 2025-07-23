@@ -117,9 +117,6 @@ export default function CalendarManager() {
     calculatePageIndexForDate(dayjs(), "day")
   );
 
-  // 跟踪已渲染的视图
-  const [renderedModes, setRenderedModes] = useState<ViewMode[]>(["month"]);
-
   const [menuVisible, setMenuVisible] = useState(false);
 
   // 根据默认视图模式设置正确的初始页面索引
@@ -127,8 +124,6 @@ export default function CalendarManager() {
     // 根据默认视图模式计算初始日期
     return dayjs(); // 月视图显示当前月
   });
-  const monthPagerRef = useRef<PagerView>(null);
-  const daysPagerRef = useRef<PagerView>(null);
 
   useEffect(() => {
     const isFabricEnabled = !!global.nativeFabricUIManager;
@@ -138,19 +133,6 @@ export default function CalendarManager() {
     );
     console.log("React Native Version:", Platform.constants.reactNativeVersion);
   }, []);
-
-  useEffect(() => {
-    if (viewMode === "month" && monthPagerRef.current) {
-      monthPagerRef.current.setPage(monthPageIndex);
-    } else if (
-      (viewMode === "day" || viewMode === "3days") &&
-      daysPagerRef.current
-    ) {
-      // You might need a separate pager ref for days view if they are different pagers
-      // Assuming they might share or you have a mechanism to handle this
-      daysPagerRef.current.setPage(daysPageIndex);
-    }
-  }, [viewMode]);
 
   const currentPageIndex = useMemo(() => {
     if (viewMode === "month") {
@@ -219,11 +201,14 @@ export default function CalendarManager() {
     if (mode === "schedule") {
       // 日程视图被动展示，保持当前日期
       targetDate = currentDate;
-    } else if (previousMode === "month" && (mode === "day" || mode === "3days")) {
+    } else if (
+      previousMode === "month" &&
+      (mode === "day" || mode === "3days")
+    ) {
       // 从月视图切换到日/3日视图：
       // 如果今天在当前显示的月份内，就显示今天，否则显示当前月的第一天
       const today = dayjs();
-      const currentMonth = currentDate;
+      const currentMonth = calculateCurrentDate("month", monthPageIndex);
 
       if (
         today.month() === currentMonth.month() &&
@@ -233,15 +218,21 @@ export default function CalendarManager() {
       } else {
         targetDate = currentMonth.startOf("month");
       }
-    } else if ((previousMode === "day" || previousMode === "3days") && mode === "month") {
+    } else if (
+      (previousMode === "day" || previousMode === "3days") &&
+      mode === "month"
+    ) {
       // 从日/3日视图切换到月视图：显示当前日期所在的月
-      targetDate = currentDate.startOf("month");
+      const dateFromDaysView = calculateCurrentDate(previousMode, daysPageIndex);
+      targetDate = dateFromDaysView.startOf("month");
     } else if (previousMode === "day" && mode === "3days") {
       // 从日视图切换到3日视图：当前日期作为3日视图的第一天
-      targetDate = currentDate;
+      const dateFromDayView = calculateCurrentDate("day", daysPageIndex);
+      targetDate = dateFromDayView;
     } else if (previousMode === "3days" && mode === "day") {
       // 从3日视图切换到日视图：使用3日视图的第一天
-      targetDate = currentDate;
+      const dateFrom3DaysView = calculateCurrentDate("3days", daysPageIndex);
+      targetDate = dateFrom3DaysView;
     } else if (previousMode === "schedule") {
       // 从日程视图切换到其他视图：根据目标视图类型设置合适的日期
       if (mode === "month") {
@@ -253,11 +244,6 @@ export default function CalendarManager() {
     } else {
       // 其他情况保持当前日期
       targetDate = currentDate;
-    }
-
-    // Lazily render components
-    if (!renderedModes.includes(mode)) {
-      setRenderedModes([...renderedModes, mode]);
     }
 
     setViewMode(mode);
@@ -331,57 +317,48 @@ export default function CalendarManager() {
   );
 
   const renderCalendar = () => {
-    const scheduleView = renderedModes.includes('schedule') ? (
-      <View style={[{ flex: 1 }, viewMode !== 'schedule' && { display: 'none' }]}>
-        <Schedule
-          events={allEvents}
-          style={{ flex: 1 }}
-          locale="en"
-          ampm={false}
-          showTime={true}
-          //Dummy props
-          cellHeight={60}
-          containerHeight={height - 100}
-          dateRange={[dayjs().subtract(1, "week"), dayjs().add(1, "week")]}
-          scrollOffsetMinutes={0}
-        />
-      </View>
-    ) : null;
-
-    const monthView = renderedModes.includes('month') ? (
-      <View style={[{ flex: 1 }, viewMode !== 'month' && { display: 'none' }]}>
-        <MonthCalendarPager
-          allEvents={allEvents}
-          currentPageIndex={monthPageIndex}
-          setCurrentPageIndex={setMonthPageIndex}
-          pagerRef={monthPagerRef}
-          minDate={minDate}
-          maxDate={maxDate}
-        />
-      </View>
-    ) : null;
-
-    const daysView = (renderedModes.includes('day') || renderedModes.includes('3days')) ? (
-      <View style={[{ flex: 1 }, viewMode !== 'day' && viewMode !== '3days' && { display: 'none' }]}>
-        <DaysCalendarPager
-          allEvents={allEvents}
-          currentPageIndex={daysPageIndex}
-          setCurrentPageIndex={setDaysPageIndex}
-          pagerRef={daysPagerRef}
-          viewMode={viewMode as "day" | "3days"}
-          minDate={minDate}
-          maxDate={maxDate}
-        />
-      </View>
-    ) : null;
-
-    return (
-      <View style={{ flex: 1 }}>
-        {scheduleView}
-        {monthView}
-        {daysView}
-      </View>
-    );
+    switch (viewMode) {
+      case "month":
+        return (
+          <MonthCalendarPager
+            allEvents={allEvents}
+            currentPageIndex={monthPageIndex}
+            setCurrentPageIndex={setMonthPageIndex}
+            minDate={minDate}
+            maxDate={maxDate}
+          />
+        );
+      case "day":
+      case "3days":
+        return (
+          <DaysCalendarPager
+            key={viewMode}
+            allEvents={allEvents}
+            currentPageIndex={daysPageIndex}
+            setCurrentPageIndex={setDaysPageIndex}
+            viewMode={viewMode as "day" | "3days"}
+            minDate={minDate}
+            maxDate={maxDate}
+          />
+        );
+      case "schedule":
+        return (
+          <Schedule
+            events={allEvents}
+            style={{ flex: 1 }}
+            locale="en"
+            ampm={false}
+            showTime={true}
+            //Dummy props
+            cellHeight={60}
+            containerHeight={height - 100}
+            dateRange={[dayjs().subtract(1, "week"), dayjs().add(1, "week")]}
+            scrollOffsetMinutes={0}
+          />
+        );
+      default:
+        return null;
+    }
   };
 
   return (
