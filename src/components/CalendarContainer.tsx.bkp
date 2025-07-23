@@ -31,7 +31,7 @@ import {
 } from '../utils/datetime'
 import { typedMemo } from '../utils/react'
 import { CalendarBody } from './CalendarBody'
-import { CalendarBodyForMonthView } from './CalendarBodyForMonthView'
+import { CalendarBodyForMonthView } from './CalendarBodyForMonthView.tsx.bkp'
 import { CalendarHeader } from './CalendarHeader'
 import { CalendarHeaderForMonthView } from './CalendarHeaderForMonthView'
 import { Schedule } from './Schedule'
