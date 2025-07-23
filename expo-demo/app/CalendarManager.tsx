@@ -87,6 +87,32 @@ export default function CalendarManager() {
     console.log("React Native Version:", Platform.constants.reactNativeVersion);
   }, []);
 
+  // 计算当前视图显示的月份
+  const currentDisplayMonth = useMemo(() => {
+    if (viewMode === "schedule") {
+      return dayjs().format("YYYY年MM月");
+    }
+
+    if (viewMode === "month") {
+      const monthInitialPage = 6;
+      const currentMonth = baseDate.add(currentPageIndex - monthInitialPage, "month");
+      return currentMonth.format("YYYY年MM月");
+    }
+
+    // day 和 3days 模式
+    const dayInitialPage = 10;
+    let currentDate: Dayjs;
+    
+    if (viewMode === "day") {
+      currentDate = baseDate.add(currentPageIndex - dayInitialPage, "day");
+    } else {
+      // 3days
+      currentDate = baseDate.add((currentPageIndex - dayInitialPage) * 3, "day");
+    }
+    
+    return currentDate.format("YYYY年MM月");
+  }, [viewMode, currentPageIndex, baseDate]);
+
   const onPageSelected = (event: any) => {
     const position = event.nativeEvent.position;
     setCurrentPageIndex(position);
@@ -194,7 +220,10 @@ export default function CalendarManager() {
         <ThemeContext.Provider value={defaultTheme}>
           <View style={styles.topHeader}>
             <View style={{ width: 50 }} />
-            <Text style={styles.title}>Calendar</Text>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>Calendar</Text>
+              <Text style={styles.monthText}>{currentDisplayMonth}</Text>
+            </View>
             <BWTouchableOpacity
               onPress={() => setMenuVisible(true)}
               style={styles.menuButton}
@@ -221,9 +250,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
+  titleContainer: {
+    alignItems: "center",
+  },
   title: {
     fontSize: 20,
     fontWeight: "bold",
+  },
+  monthText: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 2,
   },
   menuButton: {
     padding: 5,
