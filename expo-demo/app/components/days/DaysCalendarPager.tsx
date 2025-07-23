@@ -106,34 +106,8 @@ export default memo(function DaysCalendarPager({
     setCurrentPageIndex(position);
   };
 
-  const formatDateRange = (startDate: Dayjs, endDate: Dayjs) => {
-    if (viewMode === "day") {
-      return startDate.format("MMM DD, YYYY");
-    }
-    const isSameMonth = startDate.month() === endDate.month();
-    const isSameYear = startDate.year() === endDate.year();
-
-    if (isSameMonth && isSameYear) {
-      return `${startDate.format("MMM DD")} - ${endDate.format("DD, YYYY")}`;
-    } else if (isSameYear) {
-      return `${startDate.format("MMM DD")} - ${endDate.format(
-        "MMM DD, YYYY"
-      )}`;
-    } else {
-      return `${startDate.format("MMM DD, YYYY")} - ${endDate.format(
-        "MMM DD, YYYY"
-      )}`;
-    }
-  };
-
   return (
     <>
-      <Text style={styles.header}>
-        {formatDateRange(currentDisplayDate, endDate)}
-      </Text>
-      <Text style={styles.subHeader}>
-        {viewMode === "day" ? "Day View" : "3 Days View"}
-      </Text>
       <PagerView
         offscreenPageLimit={3}
         ref={pagerRef}
