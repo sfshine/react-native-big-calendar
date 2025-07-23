@@ -11,7 +11,6 @@ import PagerView from "react-native-pager-view";
 type ViewMode = "day" | "3days";
 
 interface DaysCalendarPagerProps {
-  baseDate: Dayjs;
   allEvents: ICalendarEventBase[];
   currentPageIndex: number;
   setCurrentPageIndex: (index: number) => void;
@@ -31,7 +30,6 @@ const getDatesInNextThreeDaysFixed = (date: Date): Dayjs[] => {
 };
 
 export default memo(function DaysCalendarPager({
-  baseDate,
   allEvents,
   currentPageIndex,
   setCurrentPageIndex,
@@ -45,15 +43,15 @@ export default memo(function DaysCalendarPager({
   const { pageCount, initialPage } = useMemo(() => {
     if (viewMode === 'day') {
       const totalDays = maxDate.diff(minDate, 'day') + 1;
-      const initialPage = baseDate.diff(minDate, 'day');
+      const initialPage = dayjs().diff(minDate, 'day');
       return { pageCount: totalDays, initialPage };
     } else { // 3days
       const totalDays = maxDate.diff(minDate, 'day') + 1;
       const pageCount = Math.ceil(totalDays / 3);
-      const initialPage = Math.floor(baseDate.diff(minDate, 'day') / 3);
+      const initialPage = Math.floor(dayjs().diff(minDate, 'day') / 3);
       return { pageCount, initialPage };
     }
-  }, [minDate, maxDate, baseDate, viewMode]);
+  }, [minDate, maxDate, viewMode]);
 
   const offscreenPageLimit = 3;
 

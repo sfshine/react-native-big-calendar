@@ -85,7 +85,6 @@ export default function CalendarManager() {
   const [renderedModes, setRenderedModes] = useState<ViewMode[]>(['month']);
 
   const [menuVisible, setMenuVisible] = useState(false);
-  const [baseDate] = useState(dayjs());
   const minDate = useMemo(() => getMinDate(), []);
   const maxDate = useMemo(() => getMaxDate(), []);
 
@@ -103,6 +102,10 @@ export default function CalendarManager() {
       isFabricEnabled
     );
     console.log("React Native Version:", Platform.constants.reactNativeVersion);
+
+    // Set initial page index
+    setMonthPageIndex(calculatePageIndexForDate(dayjs(), 'month'));
+    setDaysPageIndex(calculatePageIndexForDate(dayjs(), 'day'));
   }, []);
 
   const currentPageIndex = useMemo(() => {
@@ -135,7 +138,7 @@ export default function CalendarManager() {
   useEffect(() => {
     const newCurrentDate = calculateCurrentDate(viewMode, currentPageIndex);
     setCurrentDate(newCurrentDate);
-  }, [viewMode, currentPageIndex, baseDate]);
+  }, [viewMode, currentPageIndex]);
 
   // 计算当前视图显示的月份
   const currentDisplayMonth = useMemo(() => {
@@ -307,7 +310,6 @@ export default function CalendarManager() {
     const monthView = renderedModes.includes('month') ? (
       <View style={[{ flex: 1 }, viewMode !== 'month' && { display: 'none' }]}>
         <MonthCalendarPager
-          baseDate={baseDate}
           allEvents={allEvents}
           currentPageIndex={monthPageIndex}
           setCurrentPageIndex={setMonthPageIndex}
@@ -321,7 +323,6 @@ export default function CalendarManager() {
     const daysView = (renderedModes.includes('day') || renderedModes.includes('3days')) ? (
       <View style={[{ flex: 1 }, viewMode !== 'day' && viewMode !== '3days' && { display: 'none' }]}>
         <DaysCalendarPager
-          baseDate={baseDate}
           allEvents={allEvents}
           currentPageIndex={daysPageIndex}
           setCurrentPageIndex={setDaysPageIndex}

@@ -7,7 +7,6 @@ import { CalendarHeaderForMonthView } from "./CalendarHeaderForMonthView";
 import PagerView from "react-native-pager-view";
 
 interface MonthCalendarPagerProps {
-  baseDate: Dayjs;
   allEvents: ICalendarEventBase[];
   currentPageIndex: number;
   setCurrentPageIndex: (index: number) => void;
@@ -37,7 +36,6 @@ const getDatesInMonth = (date: Dayjs): Dayjs[] => {
 };
 
 export default memo(function MonthCalendarPager({
-  baseDate,
   allEvents,
   currentPageIndex,
   setCurrentPageIndex,
@@ -53,9 +51,9 @@ export default memo(function MonthCalendarPager({
     const start = minDate.startOf('month');
     const end = maxDate.endOf('month');
     const totalMonths = end.diff(start, 'month') + 1;
-    const initialPage = baseDate.diff(start, 'month');
+    const initialPage = dayjs().diff(start, 'month');
     return { pageCount: totalMonths, initialPage };
-  }, [minDate, maxDate, baseDate]);
+  }, [minDate, maxDate]);
 
   const offscreenPageLimit = 3;
 
