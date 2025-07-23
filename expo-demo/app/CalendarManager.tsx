@@ -70,19 +70,25 @@ const allEvents = [...DUMMY_EVENTS, ...eventList];
 
 type ViewMode = "day" | "3days" | "month" | "schedule";
 
+const getMinDate = () => dayjs().subtract(5, 'year').startOf('year');
+const getMaxDate = () => dayjs().add(5, 'year').endOf('year');
+
 export default function CalendarManager() {
   const { height, width } = useWindowDimensions();
   const [viewMode, setViewMode] = useState<ViewMode>("month");
 
   // 为不同的视图维护独立的页面索引
-  const [monthPageIndex, setMonthPageIndex] = useState(6);
-  const [daysPageIndex, setDaysPageIndex] = useState(100);
+  const [monthPageIndex, setMonthPageIndex] = useState(0);
+  const [daysPageIndex, setDaysPageIndex] = useState(0);
   
   // 跟踪已渲染的视图
   const [renderedModes, setRenderedModes] = useState<ViewMode[]>(['month']);
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [baseDate] = useState(dayjs());
+  const minDate = useMemo(() => getMinDate(), []);
+  const maxDate = useMemo(() => getMaxDate(), []);
+
   // 根据默认视图模式设置正确的初始页面索引
   const [currentDate, setCurrentDate] = useState(() => {
     // 根据默认视图模式计算初始日期
@@ -113,18 +119,15 @@ export default function CalendarManager() {
     }
 
     if (mode === "month") {
-      const monthInitialPage = 6;
-      return baseDate.add(pageIndex - monthInitialPage, "month");
+      return minDate.add(pageIndex, 'month');
     }
 
     // day 和 3days 模式
-    const dayInitialPage = 100;
-    
     if (mode === "day") {
-      return baseDate.add(pageIndex - dayInitialPage, "day");
+      return minDate.add(pageIndex, "day");
     } else {
       // 3days - 返回第一天的日期
-      return baseDate.add((pageIndex - dayInitialPage) * 3, "day");
+      return minDate.add(pageIndex * 3, "day");
     }
   };
 
@@ -153,38 +156,24 @@ export default function CalendarManager() {
   // 根据目标日期和视图模式计算应该跳转到的页面索引
   const calculatePageIndexForDate = (targetDate: Dayjs, mode: ViewMode): number => {
     if (mode === "month") {
-      const monthInitialPage = 6;
-      // 使用月份开始时间来计算差异，确保正确的月份计算
-      const targetMonth = targetDate.startOf('month');
-      const baseMonth = baseDate.startOf('month');
-      const monthDiff = targetMonth.diff(baseMonth, "month");
-      const pageIndex = monthInitialPage + monthDiff;
+      const pageIndex = targetDate.startOf('month').diff(minDate.startOf('month'), 'month');
       console.log('[CalendarManager] Month page calculation:', {
         targetDate: targetDate.format('YYYY-MM-DD'),
-        targetMonth: targetMonth.format('YYYY-MM-DD'),
-        baseMonth: baseMonth.format('YYYY-MM-DD'),
-        monthDiff,
+        minDate: minDate.format('YYYY-MM-DD'),
         pageIndex
       });
-      // 确保月视图页面索引在合理范围内 (0-99)
-      return Math.max(0, Math.min(99, pageIndex));
+      return pageIndex;
     }
 
     // day 和 3days 模式
-    const dayInitialPage = 100;
-    
     if (mode === "day") {
-      const dayDiff = targetDate.diff(baseDate, "day");
-      const pageIndex = dayInitialPage + dayDiff;
-      // 确保日视图页面索引在合理范围内 (0-199)
-      return Math.max(0, Math.min(199, pageIndex));
+      const pageIndex = targetDate.startOf('day').diff(minDate.startOf('day'), 'day');
+      return pageIndex;
     } else {
       // 3days - 计算三天组的索引
-      const dayDiff = targetDate.diff(baseDate, "day");
-      const groupIndex = Math.floor(dayDiff / 3);
-      const pageIndex = dayInitialPage + groupIndex;
-      // 确保3日视图页面索引在合理范围内 (0-199)
-      return Math.max(0, Math.min(199, pageIndex));
+      const dayDiff = targetDate.startOf('day').diff(minDate.startOf('day'), "day");
+      const pageIndex = Math.floor(dayDiff / 3);
+      return pageIndex;
     }
   };
 
@@ -323,6 +312,8 @@ export default function CalendarManager() {
           currentPageIndex={monthPageIndex}
           setCurrentPageIndex={setMonthPageIndex}
           pagerRef={pagerRef}
+          minDate={minDate}
+          maxDate={maxDate}
         />
       </View>
     ) : null;
@@ -336,6 +327,8 @@ export default function CalendarManager() {
           setCurrentPageIndex={setDaysPageIndex}
           pagerRef={pagerRef}
           viewMode={viewMode as "day" | "3days"}
+          minDate={minDate}
+          maxDate={maxDate}
         />
       </View>
     ) : null;

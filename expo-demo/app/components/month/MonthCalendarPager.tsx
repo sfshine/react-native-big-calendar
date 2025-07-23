@@ -12,6 +12,8 @@ interface MonthCalendarPagerProps {
   currentPageIndex: number;
   setCurrentPageIndex: (index: number) => void;
   pagerRef: React.RefObject<PagerView>;
+  minDate: Dayjs;
+  maxDate: Dayjs;
 }
 
 const getDatesInMonth = (date: Dayjs): Dayjs[] => {
@@ -40,23 +42,31 @@ export default memo(function MonthCalendarPager({
   currentPageIndex,
   setCurrentPageIndex,
   pagerRef,
+  minDate,
+  maxDate,
 }: MonthCalendarPagerProps) {
   const [isEventExpanded, setIsEventExpanded] = useState(false);
   const { height, width } = useWindowDimensions();
   const calendarBodyHeight = height * 0.8;
 
-  const pageCount = 100; // For month view, we can have a fixed number of pages
-  const initialPage = 6; // Centered around the baseDate
+  const { pageCount, initialPage } = useMemo(() => {
+    const start = minDate.startOf('month');
+    const end = maxDate.endOf('month');
+    const totalMonths = end.diff(start, 'month') + 1;
+    const initialPage = baseDate.diff(start, 'month');
+    return { pageCount: totalMonths, initialPage };
+  }, [minDate, maxDate, baseDate]);
+
   const offscreenPageLimit = 3;
 
 
 
   const pages = useMemo(() => {
     return Array.from({ length: pageCount }, (_, index) => {
-      const pageDate = baseDate.add(index - initialPage, "month");
+      const pageDate = minDate.add(index, "month");
       return { key: index, date: pageDate };
     });
-  }, [baseDate, pageCount, initialPage]);
+  }, [minDate, pageCount]);
 
   const onPageSelected = (event: any) => {
     const position = event.nativeEvent.position;

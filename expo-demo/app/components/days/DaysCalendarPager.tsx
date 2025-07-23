@@ -17,6 +17,8 @@ interface DaysCalendarPagerProps {
   setCurrentPageIndex: (index: number) => void;
   pagerRef: React.RefObject<PagerView>;
   viewMode: ViewMode;
+  minDate: Dayjs;
+  maxDate: Dayjs;
 }
 
 const getDatesInNextOneDay = (date: Date): Dayjs[] => {
@@ -35,11 +37,24 @@ export default memo(function DaysCalendarPager({
   setCurrentPageIndex,
   pagerRef,
   viewMode,
+  minDate,
+  maxDate,
 }: DaysCalendarPagerProps) {
   const { height } = useWindowDimensions();
 
-  const pageCount = 200; // For day/3-day view - increased to support wider date range
-  const initialPage = 100; // Centered around the baseDate - increased accordingly
+  const { pageCount, initialPage } = useMemo(() => {
+    if (viewMode === 'day') {
+      const totalDays = maxDate.diff(minDate, 'day') + 1;
+      const initialPage = baseDate.diff(minDate, 'day');
+      return { pageCount: totalDays, initialPage };
+    } else { // 3days
+      const totalDays = maxDate.diff(minDate, 'day') + 1;
+      const pageCount = Math.ceil(totalDays / 3);
+      const initialPage = Math.floor(baseDate.diff(minDate, 'day') / 3);
+      return { pageCount, initialPage };
+    }
+  }, [minDate, maxDate, baseDate, viewMode]);
+
   const offscreenPageLimit = 3;
 
 
@@ -78,10 +93,10 @@ export default memo(function DaysCalendarPager({
     const pagesArray = Array.from({ length: pageCount }, (_, index) => {
       let pageDate: Dayjs;
       if (viewMode === "day") {
-        pageDate = baseDate.add(index - initialPage, "day");
+        pageDate = minDate.add(index, "day");
       } else {
         // 3days
-        pageDate = baseDate.add((index - initialPage) * 3, "day");
+        pageDate = minDate.add(index * 3, "day");
       }
       const dateRange =
         viewMode === "day"
@@ -97,13 +112,13 @@ export default memo(function DaysCalendarPager({
     });
     
     return pagesArray;
-  }, [baseDate, pageCount, initialPage, viewMode, currentPageIndex]);
+  }, [minDate, pageCount, viewMode, currentPageIndex]);
 
   const offset =
     viewMode === "day"
-      ? currentPageIndex - initialPage
-      : (currentPageIndex - initialPage) * 3;
-  const currentDisplayDate = baseDate.add(offset, "day");
+      ? currentPageIndex
+      : currentPageIndex * 3;
+  const currentDisplayDate = minDate.add(offset, "day");
   const endDate =
     viewMode === "day" ? currentDisplayDate : currentDisplayDate.add(2, "day");
 
