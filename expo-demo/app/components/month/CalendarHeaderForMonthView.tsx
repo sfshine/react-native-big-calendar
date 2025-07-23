@@ -1,4 +1,4 @@
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import * as React from "react";
 import {
   type AccessibilityProps,
@@ -22,6 +22,7 @@ export interface CalendarHeaderForMonthViewProps {
   weekNumberPrefix?: string;
   headerContainerAccessibilityProps?: AccessibilityProps;
   headerCellAccessibilityProps?: AccessibilityProps;
+  displayDate: Dayjs;
 }
 
 function _CalendarHeaderForMonthView({
@@ -32,9 +33,11 @@ function _CalendarHeaderForMonthView({
   weekNumberPrefix = "",
   headerContainerAccessibilityProps = {},
   headerCellAccessibilityProps = {},
+  displayDate,
 }: CalendarHeaderForMonthViewProps) {
-  const dates = getDatesInWeek(new Date(), weekStartsOn, locale);
+  const dates = getDatesInWeek(displayDate.toDate(), weekStartsOn, locale);
   const todayWeekNum = dayjs().day();
+  const isCurrentMonth = displayDate.isSame(dayjs(), "month");
 
   const theme = useTheme();
 
@@ -80,7 +83,7 @@ function _CalendarHeaderForMonthView({
                 u["text-center"],
                 {
                   color:
-                    todayWeekNum === date.day()
+                    isCurrentMonth && todayWeekNum === date.day()
                       ? theme.palette.primary.main
                       : theme.palette.gray["800"],
                 },

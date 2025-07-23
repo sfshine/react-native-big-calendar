@@ -91,6 +91,7 @@ export default memo(function MonthCalendarPager({
         return (
           <View key={page.key} style={styles.pageContainer}>
             <CalendarHeaderForMonthView
+              displayDate={page.date}
               style={styles.headerComponent}
               locale="en"
               weekStartsOn={0}
