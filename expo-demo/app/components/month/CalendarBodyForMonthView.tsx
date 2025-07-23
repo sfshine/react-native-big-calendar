@@ -499,15 +499,13 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
               selectedDate && date && selectedDate.isSame(date, "day");
             return (
               <TouchableOpacity
-                onPress={() => date && handleDayPress(date, i)}
+                key={date?.toString()}
                 style={[
                   styles.dateCell,
-                  i > 0 && { borderTopWidth: 1 },
-                  (ii > 0 || showWeekNumber) && { borderLeftWidth: 1 },
+                  { height: calendarCellHeight },
                   getCalendarCellStyle(date?.toDate(), i),
-                  isCellSelected && { backgroundColor: "rgba(0,0,0,0.1)" },
                 ]}
-                key={`${ii}-${date?.toDate()}`}
+                onPress={() => date && handleDayPress(date, i)}
                 {...calendarCellAccessibilityPropsForMonthView}
               >
                 <React.Fragment>
@@ -552,55 +550,59 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     return jsx;
   };
 
+  const _renderCollapsedView = () => {
+    return weeks.map((week, i) => (
+      <React.Fragment key={`${i}-${week.join("-")}`}>
+        {renderWeekRow(week, i)}
+      </React.Fragment>
+    ));
+  };
+
+  const _renderExpandedView = () => {
+    // expandedWeek is guaranteed not to be null when this function is called
+    const currentExpandedWeek = expandedWeek!;
+    const elements = [];
+    elements.push(
+      <React.Fragment
+        key={`${currentExpandedWeek}-${weeks[currentExpandedWeek].join("-")}`}
+      >
+        {renderWeekRow(weeks[currentExpandedWeek], currentExpandedWeek)}
+      </React.Fragment>
+    );
+
+    if (selectedDate && weekDates.length > 0) {
+      const isLastWeek = currentExpandedWeek === weeks.length - 1;
+      const eventListHeight = isLastWeek
+        ? calendarCellHeight * (weeks.length - 1)
+        : calendarCellHeight * (weeks.length - 2);
+      elements.push(
+        <DayEventsListPager
+          key={weekDates.map((d) => d.format("YYYY-MM-DD")).join("-")}
+          events={events}
+          selectedDate={selectedDate}
+          weekDates={weekDates}
+          onPressEvent={onPressEvent}
+          onDateChange={handleDateChange}
+          style={{ height: eventListHeight }}
+        />
+      );
+    }
+
+    if (currentExpandedWeek < weeks.length - 1) {
+      elements.push(
+        <React.Fragment
+          key={`${currentExpandedWeek + 1}-${weeks[currentExpandedWeek + 1].join("-")}`}
+        >
+          {renderWeekRow(weeks[currentExpandedWeek + 1], currentExpandedWeek + 1)}
+        </React.Fragment>
+      );
+    }
+    return elements;
+  };
+
   const result = (
     <View style={[styles.container, style, { height: calendarBodyHeight }]}>
-      {(() => {
-        if (expandedWeek === null) {
-          return weeks.map((week, i) => (
-            <React.Fragment key={`${i}-${week.join("-")}`}>
-              {renderWeekRow(week, i)}
-            </React.Fragment>
-          ));
-        }
-
-        const elements = [];
-        elements.push(
-          <React.Fragment
-            key={`${expandedWeek}-${weeks[expandedWeek].join("-")}`}
-          >
-            {renderWeekRow(weeks[expandedWeek], expandedWeek)}
-          </React.Fragment>
-        );
-
-        if (selectedDate && weekDates.length > 0) {
-          const isLastWeek = expandedWeek === weeks.length - 1;
-          const eventListHeight = isLastWeek
-            ? calendarCellHeight * (weeks.length - 1)
-            : calendarCellHeight * (weeks.length - 2);
-          elements.push(
-            <DayEventsListPager
-              key={weekDates.map((d) => d.format("YYYY-MM-DD")).join("-")}
-              events={events}
-              selectedDate={selectedDate}
-              weekDates={weekDates}
-              onPressEvent={onPressEvent}
-              onDateChange={handleDateChange}
-              style={{ height: eventListHeight }}
-            />
-          );
-        }
-
-        if (expandedWeek < weeks.length - 1) {
-          elements.push(
-            <React.Fragment
-              key={`${expandedWeek + 1}-${weeks[expandedWeek + 1].join("-")}`}
-            >
-              {renderWeekRow(weeks[expandedWeek + 1], expandedWeek + 1)}
-            </React.Fragment>
-          );
-        }
-        return elements;
-      })()}
+      {expandedWeek === null ? _renderCollapsedView() : _renderExpandedView()}
     </View>
   );
   return result;
