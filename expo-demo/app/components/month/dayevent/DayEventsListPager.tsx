@@ -7,7 +7,7 @@ import PagerView, {
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import { ICalendarEventBase } from "react-native-big-calendar";
-import { styles } from "./DayEventsList.styles";
+import { styles } from "../styles/DayEventsList.styles";
 
 dayjs.extend(isBetween);
 

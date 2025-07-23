@@ -26,7 +26,7 @@ import {
   typedMemo,
   useNow,
 } from "react-native-big-calendar";
-import { styles } from "./CalendarBodyForMonthView.styles";
+import { styles } from "./styles/CalendarBodyForMonthView.styles";
 import { CalendarEventForMonthView } from "./dayevent/CalendarEventForMonthView";
 import { DayEventsListPager } from "./dayevent/DayEventsListPager";
 import { BWTouchableOpacity as TouchableOpacity } from "../../BWTouchableOpacity";
@@ -168,9 +168,6 @@ interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
 function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   targetDate,
   style,
-  onLongPressCell,
-  onPressCell,
-  onPressDateHeader,
   events,
   onPressEvent,
   eventCellStyle,
@@ -502,9 +499,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
               selectedDate && date && selectedDate.isSame(date, "day");
             return (
               <TouchableOpacity
-                onLongPress={() =>
-                  date && onLongPressCell && onLongPressCell(date.toDate())
-                }
                 onPress={() => date && handleDayPress(date, i)}
                 style={[
                   styles.dateCell,
@@ -521,8 +515,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   {
                     //Calendar body will re-render after calendarWidth/calendarCellHeight is set from layout event, prevent expensive operation during first render
                     calendarWidth > 0 &&
-                      (!disableMonthEventCellPress ||
-                        calendarCellHeight > 0) &&
+                      (!disableMonthEventCellPress || calendarCellHeight > 0) &&
                       date && (
                         <MemoizedDayEvents
                           date={date}
