@@ -83,8 +83,8 @@ export default memo(function MonthCalendarPager({
         const eventsForMonth = allEvents.filter((event) => {
           const eventStart = dayjs(event.start);
           const eventEnd = dayjs(event.end);
-          const pageStart = page.date.startOf('month');
-          const pageEnd = page.date.endOf('month');
+          const pageStart = page.date.startOf("month");
+          const pageEnd = page.date.endOf("month");
 
           // Check if the event overlaps with the current month
           return eventStart.isBefore(pageEnd) && eventEnd.isAfter(pageStart);
@@ -108,7 +108,7 @@ export default memo(function MonthCalendarPager({
               style={{ height: calendarBodyHeight }}
               maxVisibleEventCount={3}
               weekStartsOn={0} // Sunday
-              eventMinHeightForMonthView={20}
+              eventMinHeightForMonthView={15}
               moreLabel={"{moreCount} More"}
               showAdjacentMonths={true}
               sortedMonthView={true}
