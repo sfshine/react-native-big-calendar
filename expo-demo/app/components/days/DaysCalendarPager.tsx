@@ -1,5 +1,5 @@
 import dayjs, { Dayjs } from "dayjs";
-import React, { useRef, useState, useMemo, memo } from "react";
+import React, { useRef, useState, useMemo, memo, useEffect } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import {
   CalendarBody,
@@ -38,9 +38,11 @@ export default memo(function DaysCalendarPager({
 }: DaysCalendarPagerProps) {
   const { height } = useWindowDimensions();
 
-  const pageCount = 20; // For day/3-day view
-  const initialPage = 10; // Centered around the baseDate
+  const pageCount = 200; // For day/3-day view - increased to support wider date range
+  const initialPage = 100; // Centered around the baseDate - increased accordingly
   const offscreenPageLimit = 3;
+
+
 
   const allDayEvents = useMemo(
     () =>
@@ -73,7 +75,7 @@ export default memo(function DaysCalendarPager({
   );
 
   const pages = useMemo(() => {
-    return Array.from({ length: pageCount }, (_, index) => {
+    const pagesArray = Array.from({ length: pageCount }, (_, index) => {
       let pageDate: Dayjs;
       if (viewMode === "day") {
         pageDate = baseDate.add(index - initialPage, "day");
@@ -85,9 +87,17 @@ export default memo(function DaysCalendarPager({
         viewMode === "day"
           ? getDatesInNextOneDay(pageDate.toDate())
           : getDatesInNextThreeDaysFixed(pageDate.toDate());
+      
+      // 调试当前页面
+      if (index === currentPageIndex) {
+        console.log('[DaysCalendarPager] Displaying page:', index, 'date:', pageDate.format('YYYY-MM-DD'));
+      }
+      
       return { key: index, date: pageDate, dateRange };
     });
-  }, [baseDate, pageCount, initialPage, viewMode]);
+    
+    return pagesArray;
+  }, [baseDate, pageCount, initialPage, viewMode, currentPageIndex]);
 
   const offset =
     viewMode === "day"
@@ -112,11 +122,11 @@ export default memo(function DaysCalendarPager({
         offscreenPageLimit={3}
         ref={pagerRef}
         style={styles.pagerView}
-        initialPage={initialPage}
+        initialPage={currentPageIndex}
+        key={`${viewMode}-${currentPageIndex}`}
         onPageSelected={onPageSelected}
       >
         {pages.map((page, index) => {
-          console.log("DaysCalendarPager: page", page);
           const dateRange: Dayjs[] = page.dateRange;
           const isPageCached =
             Math.abs(index - currentPageIndex) <= offscreenPageLimit;

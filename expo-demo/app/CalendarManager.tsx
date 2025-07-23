@@ -75,7 +75,16 @@ export default function CalendarManager() {
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [menuVisible, setMenuVisible] = useState(false);
   const [baseDate] = useState(dayjs());
-  const [currentPageIndex, setCurrentPageIndex] = useState(10);
+  // 根据默认视图模式设置正确的初始页面索引
+  const [currentPageIndex, setCurrentPageIndex] = useState(() => {
+    // 月视图初始页面是6，日/3日视图初始页面是100
+    return 6; // 默认是月视图
+  });
+  // 添加currentDate状态来跟踪当前实际显示的日期
+  const [currentDate, setCurrentDate] = useState(() => {
+    // 根据默认视图模式计算初始日期
+    return dayjs(); // 月视图显示当前月
+  });
   const pagerRef = useRef(null);
 
   useEffect(() => {
@@ -87,45 +96,146 @@ export default function CalendarManager() {
     console.log("React Native Version:", Platform.constants.reactNativeVersion);
   }, []);
 
-  // 计算当前视图显示的月份
-  const currentDisplayMonth = useMemo(() => {
-    if (viewMode === "schedule") {
-      return dayjs().format("YYYY年MM月");
+  // 根据当前视图模式和页面索引计算实际显示的日期
+  const calculateCurrentDate = (mode: ViewMode, pageIndex: number): Dayjs => {
+    if (mode === "schedule") {
+      return dayjs();
     }
 
-    if (viewMode === "month") {
+    if (mode === "month") {
       const monthInitialPage = 6;
-      const currentMonth = baseDate.add(currentPageIndex - monthInitialPage, "month");
-      return currentMonth.format("YYYY年MM月");
+      return baseDate.add(pageIndex - monthInitialPage, "month");
     }
 
     // day 和 3days 模式
-    const dayInitialPage = 10;
-    let currentDate: Dayjs;
+    const dayInitialPage = 100;
     
-    if (viewMode === "day") {
-      currentDate = baseDate.add(currentPageIndex - dayInitialPage, "day");
+    if (mode === "day") {
+      return baseDate.add(pageIndex - dayInitialPage, "day");
     } else {
-      // 3days
-      currentDate = baseDate.add((currentPageIndex - dayInitialPage) * 3, "day");
+      // 3days - 返回第一天的日期
+      return baseDate.add((pageIndex - dayInitialPage) * 3, "day");
     }
-    
-    return currentDate.format("YYYY年MM月");
+  };
+
+  // 更新currentDate当页面索引变化时
+  useEffect(() => {
+    const newCurrentDate = calculateCurrentDate(viewMode, currentPageIndex);
+    setCurrentDate(newCurrentDate);
   }, [viewMode, currentPageIndex, baseDate]);
+
+  // 计算当前视图显示的月份
+  const currentDisplayMonth = useMemo(() => {
+    const displayMonth = currentDate.format("YYYY年MM月");
+    
+    if (viewMode === "schedule") {
+      return displayMonth;
+    }
+
+    if (viewMode === "month") {
+      return displayMonth;
+    }
+
+    // day 和 3days 模式 - 显示当前日期所在的月份
+    return displayMonth;
+  }, [viewMode, currentDate]);
 
   const onPageSelected = (event: any) => {
     const position = event.nativeEvent.position;
     setCurrentPageIndex(position);
   };
 
+  // 根据目标日期和视图模式计算应该跳转到的页面索引
+  const calculatePageIndexForDate = (targetDate: Dayjs, mode: ViewMode): number => {
+    if (mode === "month") {
+      const monthInitialPage = 6;
+      // 使用月份开始时间来计算差异，确保正确的月份计算
+      const targetMonth = targetDate.startOf('month');
+      const baseMonth = baseDate.startOf('month');
+      const monthDiff = targetMonth.diff(baseMonth, "month");
+      const pageIndex = monthInitialPage + monthDiff;
+      console.log('[CalendarManager] Month page calculation:', {
+        targetDate: targetDate.format('YYYY-MM-DD'),
+        targetMonth: targetMonth.format('YYYY-MM-DD'),
+        baseMonth: baseMonth.format('YYYY-MM-DD'),
+        monthDiff,
+        pageIndex
+      });
+      // 确保月视图页面索引在合理范围内 (0-99)
+      return Math.max(0, Math.min(99, pageIndex));
+    }
+
+    // day 和 3days 模式
+    const dayInitialPage = 100;
+    
+    if (mode === "day") {
+      const dayDiff = targetDate.diff(baseDate, "day");
+      const pageIndex = dayInitialPage + dayDiff;
+      // 确保日视图页面索引在合理范围内 (0-199)
+      return Math.max(0, Math.min(199, pageIndex));
+    } else {
+      // 3days - 计算三天组的索引
+      const dayDiff = targetDate.diff(baseDate, "day");
+      const groupIndex = Math.floor(dayDiff / 3);
+      const pageIndex = dayInitialPage + groupIndex;
+      // 确保3日视图页面索引在合理范围内 (0-199)
+      return Math.max(0, Math.min(199, pageIndex));
+    }
+  };
+
   const switchViewMode = (mode: ViewMode) => {
+    const previousMode = viewMode;
+    let targetDate = currentDate;
+
+    // 根据视图切换逻辑计算目标日期
+    if (mode === "schedule") {
+      // 日程视图被动展示，保持当前日期
+      targetDate = currentDate;
+    } else if (previousMode === "month" && (mode === "day" || mode === "3days")) {
+      // 从月视图切换到日/3日视图：
+      // 如果今天在当前显示的月份内，就显示今天，否则显示当前月的第一天
+      const today = dayjs();
+      const currentMonth = currentDate;
+      
+      if (today.month() === currentMonth.month() && today.year() === currentMonth.year()) {
+        targetDate = today;
+      } else {
+        targetDate = currentMonth.startOf("month");
+      }
+    } else if ((previousMode === "day" || previousMode === "3days") && mode === "month") {
+      // 从日/3日视图切换到月视图：显示当前日期所在的月
+      targetDate = currentDate.startOf("month");
+    } else if (previousMode === "day" && mode === "3days") {
+      // 从日视图切换到3日视图：当前日期作为3日视图的第一天
+      targetDate = currentDate;
+    } else if (previousMode === "3days" && mode === "day") {
+      // 从3日视图切换到日视图：使用3日视图的第一天
+      targetDate = currentDate;
+    } else if (previousMode === "schedule") {
+      // 从日程视图切换到其他视图：根据目标视图类型设置合适的日期
+      if (mode === "month") {
+        targetDate = currentDate.startOf("month");
+      } else {
+        // day 或 3days：使用当前日期
+        targetDate = currentDate;
+      }
+    } else {
+      // 其他情况保持当前日期
+      targetDate = currentDate;
+    }
+
     setViewMode(mode);
     setMenuVisible(false);
-    // Reset pager to initial page when view mode changes to avoid index out of bounds
+
+    // 如果不是schedule视图，计算并设置正确的页面索引
     if (mode !== "schedule") {
-      const initialPage = mode === "month" ? 6 : 10;
-      setCurrentPageIndex(initialPage);
-      // pagerRef.current?.setPage(initialPage); // This line will be handled by the child components
+      const newPageIndex = calculatePageIndexForDate(targetDate, mode);
+      console.log('[CalendarManager] Switching to', mode, 'with targetDate:', targetDate.format('YYYY-MM-DD'), 'pageIndex:', newPageIndex);
+      
+      setCurrentPageIndex(newPageIndex);
+      setCurrentDate(targetDate);
+    } else {
+      setCurrentDate(targetDate);
     }
   };
 

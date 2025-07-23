@@ -1,5 +1,5 @@
 import dayjs, { Dayjs } from "dayjs";
-import React, { useRef, useState, useMemo, memo } from "react";
+import React, { useRef, useState, useMemo, memo, useEffect } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { ICalendarEventBase } from "react-native-big-calendar";
 import { CalendarBodyForMonthView } from "./CalendarBodyForMonthView";
@@ -49,6 +49,8 @@ export default memo(function MonthCalendarPager({
   const initialPage = 6; // Centered around the baseDate
   const offscreenPageLimit = 3;
 
+
+
   const pages = useMemo(() => {
     return Array.from({ length: pageCount }, (_, index) => {
       const pageDate = baseDate.add(index - initialPage, "month");
@@ -66,7 +68,8 @@ export default memo(function MonthCalendarPager({
       offscreenPageLimit={offscreenPageLimit}
       ref={pagerRef}
       style={[styles.pagerView, { height: calendarBodyHeight }]}
-      initialPage={initialPage}
+      initialPage={currentPageIndex}
+      key={`month-${currentPageIndex}`}
       onPageSelected={onPageSelected}
       scrollEnabled={!isEventExpanded}
     >
