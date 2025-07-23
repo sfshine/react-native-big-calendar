@@ -13,7 +13,6 @@ export * from "./commonStyles";
 export * from "./components/CalendarBody";
 export * from "./components/CalendarEvent";
 export * from "./components/CalendarHeader";
-export * from "./components/CalendarHeaderForMonthView";
 export * from "./components/DefaultCalendarEventRenderer";
 export * from "./components/HourGuideCell";
 export * from "./components/HourGuideColumn";
