@@ -1,45 +1,50 @@
-import type dayjs from 'dayjs'
-import * as React from 'react'
-import type { AccessibilityProps, ViewStyle } from 'react-native'
-import { Text, View, StyleSheet, Platform } from 'react-native'
-import type { EventCellStyle, EventRenderer, ICalendarEventBase, CalendarTouchableOpacityProps } from 'react-native-big-calendar'
-import { getEventSpanningInfo } from 'react-native-big-calendar'
+import type dayjs from "dayjs";
+import * as React from "react";
+import type { AccessibilityProps, ViewStyle } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
+import type {
+  CalendarTouchableOpacityProps,
+  EventCellStyle,
+  EventRenderer,
+  ICalendarEventBase,
+} from "react-native-big-calendar";
+import { getEventSpanningInfo } from "react-native-big-calendar";
 
 const u = StyleSheet.create({
-  'mt-2': {
+  "mt-2": {
     marginTop: 2,
   },
   truncate:
-    Platform.OS === 'web'
+    Platform.OS === "web"
       ? {
-          overflow: 'hidden',
+          overflow: "hidden",
           // textOverflow: 'ellipsis',
           // whiteSpace: 'nowrap',
         }
       : {},
-})
+});
 
 const defaultTheme = {
   isRTL: false,
   palette: {
     primary: {
-      main: 'rgb(66, 133, 244)',
-      contrastText: '#fff',
+      main: "rgb(66, 133, 244)",
+      contrastText: "#fff",
     },
-    nowIndicator: 'red',
+    nowIndicator: "red",
     gray: {
-      100: '#f5f5f5',
-      200: '#eeeeee',
-      300: '#e0e0e0',
-      500: '#9e9e9e',
-      800: '#424242',
+      100: "#f5f5f5",
+      200: "#eeeeee",
+      300: "#e0e0e0",
+      500: "#9e9e9e",
+      800: "#424242",
     },
-    moreLabel: '#000000',
+    moreLabel: "#000000",
   },
   eventCellOverlappings: [
-    { main: '#E26245', contrastText: '#fff' }, // orange
-    { main: '#4AC001', contrastText: '#fff' }, // green
-    { main: '#5934C7', contrastText: '#fff' }, // purple
+    { main: "#E26245", contrastText: "#fff" }, // orange
+    { main: "#4AC001", contrastText: "#fff" }, // green
+    { main: "#5934C7", contrastText: "#fff" }, // purple
   ],
   typography: {
     xs: {
@@ -53,25 +58,24 @@ const defaultTheme = {
     },
     moreLabel: {
       fontSize: 11,
-      fontWeight: 'bold',
+      fontWeight: "bold",
     },
   },
-}
+};
 
-const typedMemo: <T>(c: T) => T = React.memo
+const typedMemo: <T>(c: T) => T = React.memo;
 
 interface CalendarEventProps<T extends ICalendarEventBase> {
-  event: T
-  onPressEvent?: (event: T) => void
-  eventCellStyle?: EventCellStyle<T>
-  eventCellAccessibilityProps?: AccessibilityProps
-  renderEvent?: EventRenderer<T>
-  date: dayjs.Dayjs
-  dayOfTheWeek: number
-  calendarWidth: number
-  isRTL: boolean
-  eventMinHeightForMonthView: number
-  showAdjacentMonths: boolean
+  event: T;
+  eventCellStyle?: EventCellStyle<T>;
+  eventCellAccessibilityProps?: AccessibilityProps;
+  renderEvent?: EventRenderer<T>;
+  date: dayjs.Dayjs;
+  dayOfTheWeek: number;
+  calendarWidth: number;
+  isRTL: boolean;
+  eventMinHeightForMonthView: number;
+  showAdjacentMonths: boolean;
 }
 
 function _CalendarEventForMonthView<T extends ICalendarEventBase>({
@@ -86,24 +90,32 @@ function _CalendarEventForMonthView<T extends ICalendarEventBase>({
   eventMinHeightForMonthView,
   showAdjacentMonths,
 }: CalendarEventProps<T>) {
-  const theme = defaultTheme
+  const theme = defaultTheme;
 
-  const { eventWidth, isMultipleDays, isMultipleDaysStart, eventWeekDuration } = React.useMemo(
-    () => getEventSpanningInfo(event, date, dayOfTheWeek, calendarWidth, showAdjacentMonths),
-    [date, dayOfTheWeek, event, calendarWidth, showAdjacentMonths],
-  )
+  const { eventWidth, isMultipleDays, isMultipleDaysStart, eventWeekDuration } =
+    React.useMemo(
+      () =>
+        getEventSpanningInfo(
+          event,
+          date,
+          dayOfTheWeek,
+          calendarWidth,
+          showAdjacentMonths
+        ),
+      [date, dayOfTheWeek, event, calendarWidth, showAdjacentMonths]
+    );
 
   const eventStyles: ViewStyle[] = [
     { backgroundColor: theme.palette.primary.main },
     isMultipleDaysStart && eventWeekDuration > 1
       ? ({
-          position: 'absolute',
+          position: "absolute",
           width: eventWidth,
           zIndex: 10000,
         } as ViewStyle)
       : {},
     isRTL ? { right: 0 } : { left: 0 },
-    typeof eventCellStyle === 'function'
+    typeof eventCellStyle === "function"
       ? eventCellStyle(event)
       : eventCellStyle,
   ].filter(Boolean) as ViewStyle[];
@@ -117,13 +129,14 @@ function _CalendarEventForMonthView<T extends ICalendarEventBase>({
   };
 
   return (
-    <View
-      style={[{ minHeight: eventMinHeightForMonthView }, u['mt-2']]}
-    >
-      {(!isMultipleDays && date.isSame(event.start, 'day')) ||
+    <View style={[{ minHeight: eventMinHeightForMonthView }, u["mt-2"]]}>
+      {(!isMultipleDays && date.isSame(event.start, "day")) ||
       (isMultipleDays && isMultipleDaysStart) ? (
         renderEvent ? (
-          renderEvent(event, { ...dummyTouchableOpacityProps, ...eventCellAccessibilityProps })
+          renderEvent(event, {
+            ...dummyTouchableOpacityProps,
+            ...eventCellAccessibilityProps,
+          })
         ) : (
           <View style={eventStyles} {...eventCellAccessibilityProps}>
             <Text
@@ -131,7 +144,7 @@ function _CalendarEventForMonthView<T extends ICalendarEventBase>({
                 { color: theme.palette.primary.contrastText },
                 theme.typography.xs,
                 u.truncate,
-                isRTL && { textAlign: 'right' },
+                isRTL && { textAlign: "right" },
               ]}
               numberOfLines={1}
             >
@@ -141,7 +154,7 @@ function _CalendarEventForMonthView<T extends ICalendarEventBase>({
         )
       ) : null}
     </View>
-  )
+  );
 }
 
-export const CalendarEventForMonthView = typedMemo(_CalendarEventForMonthView)
+export const CalendarEventForMonthView = typedMemo(_CalendarEventForMonthView);

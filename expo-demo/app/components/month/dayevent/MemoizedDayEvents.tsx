@@ -35,8 +35,6 @@ function _MemoizedDayEvents<T extends ICalendarEventBase>({
   eventMinHeightForMonthView,
   showAdjacentMonths,
   moreLabel,
-  onPressMoreLabel,
-  onPressEvent,
   renderEvent,
   eventCellStyle,
   eventCellAccessibilityProps,
@@ -55,7 +53,6 @@ function _MemoizedDayEvents<T extends ICalendarEventBase>({
           eventCellAccessibilityProps={
             eventCellAccessibilityProps as AccessibilityProps
           }
-          onPressEvent={onPressEvent}
           renderEvent={renderEvent}
           date={date}
           dayOfTheWeek={dayOfTheWeek}
@@ -66,11 +63,7 @@ function _MemoizedDayEvents<T extends ICalendarEventBase>({
         />
       ))}
       {moreCount > 0 && (
-        <Text
-          key={`more-${date.toString()}`}
-          style={styles.moreLabelText}
-          onPress={() => onPressMoreLabel?.(dayEvents, date.toDate())}
-        >
+        <Text key={`more-${date.toString()}`} style={styles.moreLabelText}>
           {moreLabel.replace("{moreCount}", `${moreCount}`)}
         </Text>
       )}
