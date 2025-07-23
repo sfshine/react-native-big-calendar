@@ -9,7 +9,7 @@ import {
   ThemeContext,
 } from "react-native-big-calendar";
 import PagerView from "react-native-pager-view";
-import { CalendarBody } from "react-native-big-calendar";
+import { CalendarBody } from "./components/days/CalendarBody";
 
 const DUMMY_EVENTS: ICalendarEventBase[] = [
   {

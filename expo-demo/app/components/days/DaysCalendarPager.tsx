@@ -2,10 +2,10 @@ import dayjs, { Dayjs } from "dayjs";
 import React, { useRef, useState, useMemo, memo, useEffect } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import {
-  CalendarBody,
   CalendarHeader,
   ICalendarEventBase,
 } from "react-native-big-calendar";
+import { CalendarBody } from "./CalendarBody";
 import PagerView from "react-native-pager-view";
 
 type ViewMode = "day" | "3days";

@@ -10,12 +10,12 @@ dayjs.extend(isoWeek);
 export { default as dayjs } from "dayjs";
 
 export * from "./commonStyles";
-export * from "./components/CalendarBody";
-export * from "./components/CalendarEvent";
 export * from "./components/CalendarHeader";
-export * from "./components/DefaultCalendarEventRenderer";
-export * from "./components/HourGuideCell";
 export * from "./components/HourGuideColumn";
+export * from "./components/HourGuideCell";
+export * from "./components/DefaultCalendarEventRenderer";
+export * from "./components/CalendarEvent";
+export * from './components/CalendarContainer'
 export * from "./components/Schedule";
 export * from "./interfaces";
 export * from "./theme/ThemeContext";
