@@ -60,7 +60,7 @@ export default memo(function DaysCalendarPager({
     }
   }, [minDate, maxDate, viewMode]);
 
-  const offscreenPageLimit = 3;
+  const offscreenPageLimit = 1;
 
 
 
