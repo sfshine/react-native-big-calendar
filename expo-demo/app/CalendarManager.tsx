@@ -117,6 +117,7 @@ export default function CalendarManager() {
 
   // 根据当前视图模式和页面索引计算实际显示的日期
   const calculateCurrentDate = (mode: ViewMode, pageIndex: number): Dayjs => {
+    console.log(`[CalendarManager] calculateCurrentDate called. mode: ${mode}, pageIndex: ${pageIndex}`);
     if (mode === "schedule") {
       return dayjs();
     }
@@ -136,7 +137,9 @@ export default function CalendarManager() {
 
   // 更新currentDate当页面索引变化时
   useEffect(() => {
+    console.log(`[CalendarManager] useEffect for currentPageIndex triggered. viewMode: ${viewMode}, currentPageIndex: ${currentPageIndex}`);
     const newCurrentDate = calculateCurrentDate(viewMode, currentPageIndex);
+    console.log(`[CalendarManager] Setting new current date: ${newCurrentDate.format('YYYY-MM-DD')}`);
     setCurrentDate(newCurrentDate);
   }, [viewMode, currentPageIndex]);
 
@@ -240,9 +243,9 @@ export default function CalendarManager() {
         setDaysPageIndex(newPageIndex);
       }
 
-      setCurrentDate(targetDate);
+      // setCurrentDate(targetDate); // Let the useEffect handle this
     } else {
-      setCurrentDate(targetDate);
+      // setCurrentDate(targetDate); // Let the useEffect handle this
     }
   };
 

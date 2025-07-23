@@ -126,6 +126,7 @@ export default memo(function DaysCalendarPager({
 
   const onPageSelected = (event: any) => {
     const position = event.nativeEvent.position;
+    console.log(`[DaysCalendarPager] onPageSelected: position=${position}`);
     setCurrentPageIndex(position);
   };
 
@@ -136,7 +137,7 @@ export default memo(function DaysCalendarPager({
         ref={pagerRef}
         style={styles.pagerView}
         initialPage={currentPageIndex}
-        key={`${viewMode}-${currentPageIndex}`}
+        key={`${viewMode}-${minDate.toString()}-${maxDate.toString()}`}
         onPageSelected={onPageSelected}
       >
         {pages.map((page, index) => {
