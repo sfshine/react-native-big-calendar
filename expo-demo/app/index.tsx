@@ -39,7 +39,7 @@ const EXAMPLES = [
 export default function App() {
   useEffect(() => {
     setTimeout(() => {
-      router.replace("/CalendarManager");
+      router.push("/CalendarManager");
     });
   }, []);
   return (

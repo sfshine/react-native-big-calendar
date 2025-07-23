@@ -77,7 +77,6 @@ export default memo(function MonthCalendarPager({
       ref={pagerRef}
       style={[styles.pagerView, { height: calendarBodyHeight }]}
       initialPage={currentPageIndex}
-      key={`month-${currentPageIndex}`}
       onPageSelected={onPageSelected}
       scrollEnabled={!isEventExpanded}
     >

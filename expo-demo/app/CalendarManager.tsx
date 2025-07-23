@@ -10,6 +10,7 @@ import {
   View,
   Platform,
 } from "react-native";
+import PagerView from "react-native-pager-view";
 
 declare global {
   var nativeFabricUIManager: any;
@@ -70,30 +71,64 @@ const allEvents = [...DUMMY_EVENTS, ...eventList];
 
 type ViewMode = "day" | "3days" | "month" | "schedule";
 
-const getMinDate = () => dayjs().subtract(5, 'year').startOf('year');
-const getMaxDate = () => dayjs().add(5, 'year').endOf('year');
+const getMinDate = () => dayjs().subtract(5, "year").startOf("year");
+const getMaxDate = () => dayjs().add(5, "year").endOf("year");
+
+const minDate = getMinDate();
+const maxDate = getMaxDate();
+
+// 根据目标日期和视图模式计算应该跳转到的页面索引
+const calculatePageIndexForDate = (
+  targetDate: Dayjs,
+  mode: ViewMode
+): number => {
+  if (mode === "month") {
+    const pageIndex = targetDate
+      .startOf("month")
+      .diff(minDate.startOf("month"), "month");
+    return pageIndex;
+  }
+
+  // day 和 3days 模式
+  if (mode === "day") {
+    const pageIndex = targetDate
+      .startOf("day")
+      .diff(minDate.startOf("day"), "day");
+    return pageIndex;
+  } else {
+    // 3days - 计算三天组的索引
+    const dayDiff = targetDate
+      .startOf("day")
+      .diff(minDate.startOf("day"), "day");
+    const pageIndex = Math.floor(dayDiff / 3);
+    return pageIndex;
+  }
+};
 
 export default function CalendarManager() {
   const { height, width } = useWindowDimensions();
   const [viewMode, setViewMode] = useState<ViewMode>("month");
 
   // 为不同的视图维护独立的页面索引
-  const [monthPageIndex, setMonthPageIndex] = useState(0);
-  const [daysPageIndex, setDaysPageIndex] = useState(0);
-  
+  const [monthPageIndex, setMonthPageIndex] = useState(() =>
+    calculatePageIndexForDate(dayjs(), "month")
+  );
+  const [daysPageIndex, setDaysPageIndex] = useState(() =>
+    calculatePageIndexForDate(dayjs(), "day")
+  );
+
   // 跟踪已渲染的视图
-  const [renderedModes, setRenderedModes] = useState<ViewMode[]>(['month']);
+  const [renderedModes, setRenderedModes] = useState<ViewMode[]>(["month"]);
 
   const [menuVisible, setMenuVisible] = useState(false);
-  const minDate = useMemo(() => getMinDate(), []);
-  const maxDate = useMemo(() => getMaxDate(), []);
 
   // 根据默认视图模式设置正确的初始页面索引
   const [currentDate, setCurrentDate] = useState(() => {
     // 根据默认视图模式计算初始日期
     return dayjs(); // 月视图显示当前月
   });
-  const pagerRef = useRef(null);
+  const monthPagerRef = useRef<PagerView>(null);
+  const daysPagerRef = useRef<PagerView>(null);
 
   useEffect(() => {
     const isFabricEnabled = !!global.nativeFabricUIManager;
@@ -102,14 +137,23 @@ export default function CalendarManager() {
       isFabricEnabled
     );
     console.log("React Native Version:", Platform.constants.reactNativeVersion);
-
-    // Set initial page index
-    setMonthPageIndex(calculatePageIndexForDate(dayjs(), 'month'));
-    setDaysPageIndex(calculatePageIndexForDate(dayjs(), 'day'));
   }, []);
 
+  useEffect(() => {
+    if (viewMode === "month" && monthPagerRef.current) {
+      monthPagerRef.current.setPage(monthPageIndex);
+    } else if (
+      (viewMode === "day" || viewMode === "3days") &&
+      daysPagerRef.current
+    ) {
+      // You might need a separate pager ref for days view if they are different pagers
+      // Assuming they might share or you have a mechanism to handle this
+      daysPagerRef.current.setPage(daysPageIndex);
+    }
+  }, [viewMode]);
+
   const currentPageIndex = useMemo(() => {
-    if (viewMode === 'month') {
+    if (viewMode === "month") {
       return monthPageIndex;
     }
     return daysPageIndex; // day, 3days
@@ -117,13 +161,15 @@ export default function CalendarManager() {
 
   // 根据当前视图模式和页面索引计算实际显示的日期
   const calculateCurrentDate = (mode: ViewMode, pageIndex: number): Dayjs => {
-    console.log(`[CalendarManager] calculateCurrentDate called. mode: ${mode}, pageIndex: ${pageIndex}`);
+    console.log(
+      `[CalendarManager] calculateCurrentDate called. mode: ${mode}, pageIndex: ${pageIndex}`
+    );
     if (mode === "schedule") {
       return dayjs();
     }
 
     if (mode === "month") {
-      return minDate.add(pageIndex, 'month');
+      return minDate.add(pageIndex, "month");
     }
 
     // day 和 3days 模式
@@ -137,16 +183,22 @@ export default function CalendarManager() {
 
   // 更新currentDate当页面索引变化时
   useEffect(() => {
-    console.log(`[CalendarManager] useEffect for currentPageIndex triggered. viewMode: ${viewMode}, currentPageIndex: ${currentPageIndex}`);
+    console.log(
+      `[CalendarManager] useEffect for currentPageIndex triggered. viewMode: ${viewMode}, currentPageIndex: ${currentPageIndex}`
+    );
     const newCurrentDate = calculateCurrentDate(viewMode, currentPageIndex);
-    console.log(`[CalendarManager] Setting new current date: ${newCurrentDate.format('YYYY-MM-DD')}`);
+    console.log(
+      `[CalendarManager] Setting new current date: ${newCurrentDate.format(
+        "YYYY-MM-DD"
+      )}`
+    );
     setCurrentDate(newCurrentDate);
   }, [viewMode, currentPageIndex]);
 
   // 计算当前视图显示的月份
   const currentDisplayMonth = useMemo(() => {
     const displayMonth = currentDate.format("YYYY年MM月");
-    
+
     if (viewMode === "schedule") {
       return displayMonth;
     }
@@ -158,30 +210,6 @@ export default function CalendarManager() {
     // day 和 3days 模式 - 显示当前日期所在的月份
     return displayMonth;
   }, [viewMode, currentDate]);
-
-  // 根据目标日期和视图模式计算应该跳转到的页面索引
-  const calculatePageIndexForDate = (targetDate: Dayjs, mode: ViewMode): number => {
-    if (mode === "month") {
-      const pageIndex = targetDate.startOf('month').diff(minDate.startOf('month'), 'month');
-      console.log('[CalendarManager] Month page calculation:', {
-        targetDate: targetDate.format('YYYY-MM-DD'),
-        minDate: minDate.format('YYYY-MM-DD'),
-        pageIndex
-      });
-      return pageIndex;
-    }
-
-    // day 和 3days 模式
-    if (mode === "day") {
-      const pageIndex = targetDate.startOf('day').diff(minDate.startOf('day'), 'day');
-      return pageIndex;
-    } else {
-      // 3days - 计算三天组的索引
-      const dayDiff = targetDate.startOf('day').diff(minDate.startOf('day'), "day");
-      const pageIndex = Math.floor(dayDiff / 3);
-      return pageIndex;
-    }
-  };
 
   const switchViewMode = (mode: ViewMode) => {
     const previousMode = viewMode;
@@ -196,8 +224,11 @@ export default function CalendarManager() {
       // 如果今天在当前显示的月份内，就显示今天，否则显示当前月的第一天
       const today = dayjs();
       const currentMonth = currentDate;
-      
-      if (today.month() === currentMonth.month() && today.year() === currentMonth.year()) {
+
+      if (
+        today.month() === currentMonth.month() &&
+        today.year() === currentMonth.year()
+      ) {
         targetDate = today;
       } else {
         targetDate = currentMonth.startOf("month");
@@ -235,9 +266,16 @@ export default function CalendarManager() {
     // 如果不是schedule视图，计算并设置正确的页面索引
     if (mode !== "schedule") {
       const newPageIndex = calculatePageIndexForDate(targetDate, mode);
-      console.log('[CalendarManager] Switching to', mode, 'with targetDate:', targetDate.format('YYYY-MM-DD'), 'pageIndex:', newPageIndex);
-      
-      if (mode === 'month') {
+      console.log(
+        "[CalendarManager] Switching to",
+        mode,
+        "with targetDate:",
+        targetDate.format("YYYY-MM-DD"),
+        "pageIndex:",
+        newPageIndex
+      );
+
+      if (mode === "month") {
         setMonthPageIndex(newPageIndex);
       } else {
         setDaysPageIndex(newPageIndex);
@@ -316,20 +354,20 @@ export default function CalendarManager() {
           allEvents={allEvents}
           currentPageIndex={monthPageIndex}
           setCurrentPageIndex={setMonthPageIndex}
-          pagerRef={pagerRef}
+          pagerRef={monthPagerRef}
           minDate={minDate}
           maxDate={maxDate}
         />
       </View>
     ) : null;
-    
+
     const daysView = (renderedModes.includes('day') || renderedModes.includes('3days')) ? (
       <View style={[{ flex: 1 }, viewMode !== 'day' && viewMode !== '3days' && { display: 'none' }]}>
         <DaysCalendarPager
           allEvents={allEvents}
           currentPageIndex={daysPageIndex}
           setCurrentPageIndex={setDaysPageIndex}
-          pagerRef={pagerRef}
+          pagerRef={daysPagerRef}
           viewMode={viewMode as "day" | "3days"}
           minDate={minDate}
           maxDate={maxDate}
