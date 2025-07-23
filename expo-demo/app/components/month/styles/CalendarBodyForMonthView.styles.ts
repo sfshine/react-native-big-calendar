@@ -9,6 +9,17 @@ export const styles = StyleSheet.create({
     borderRadius: 3,
     borderColor: "#E0E0E0", // A common gray-200
   },
+  dateContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  selectedDateContainer: {
+    backgroundColor: "#E0E0E0",
+  },
   dateCellText: {
     textAlign: "center",
     fontSize: 13,
@@ -45,14 +56,16 @@ export const styles = StyleSheet.create({
   },
   collapseContainer: {
     position: "absolute",
-    bottom: 2,
+    top: 30, // Adjust this value to position it below the date text
     left: 0,
     right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(240, 240, 240, 1)", // Light grey background with some transparency
     alignItems: "center",
     justifyContent: "center",
   },
   collapseText: {
-    fontSize: 12,
+    fontSize: 16,
     color: "#424242",
   },
 });

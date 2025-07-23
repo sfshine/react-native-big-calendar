@@ -8,6 +8,7 @@ import {
 } from "react-native-big-calendar";
 import { styles } from "../styles/CalendarBodyForMonthView.styles";
 import { CalendarEventForMonthView } from "./CalendarEventForMonthView";
+import { View } from "react-native";
 
 interface MemoizedDayEventsProps<T extends ICalendarEventBase> {
   date: dayjs.Dayjs;
@@ -45,7 +46,7 @@ function _MemoizedDayEvents<T extends ICalendarEventBase>({
   const moreCount = dayEvents.length - maxVisibleEventCount;
 
   return (
-    <React.Fragment>
+    <View style={{ marginTop: 8 }}>
       {eventsToShow.map((event, index) => (
         <CalendarEventForMonthView
           key={`${index}-${event.start}-${event.title}-${event.end}`}
@@ -73,7 +74,7 @@ function _MemoizedDayEvents<T extends ICalendarEventBase>({
           {moreLabel.replace("{moreCount}", `${moreCount}`)}
         </Text>
       )}
-    </React.Fragment>
+    </View>
   );
 }
 

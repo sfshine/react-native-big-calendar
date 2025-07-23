@@ -336,12 +336,16 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     [eventsInMonth, sortedMonthView]
   );
 
-  const renderDateCell = (date: dayjs.Dayjs | null, index: number) => {
+  const renderDateCell = (
+    date: dayjs.Dayjs | null,
+    index: number,
+    isSelected: boolean
+  ) => {
     if (date && renderCustomDateForMonth) {
       return renderCustomDateForMonth(date.toDate());
     }
 
-    return (
+    const text = (
       <Text
         style={[
           styles.dateCellText,
@@ -352,6 +356,8 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                 ? "#007AFF"
                 : date?.month() !== targetDate.month()
                 ? "#9E9E9E"
+                : isSelected
+                ? "#000000"
                 : "#212121",
           },
           getCalendarCellTextStyle(date?.toDate(), index),
@@ -359,6 +365,14 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
       >
         {date?.format("D")}
       </Text>
+    );
+
+    return (
+      <View
+        style={[styles.dateContainer, isSelected && styles.selectedDateContainer]}
+      >
+        {text}
+      </View>
     );
   };
 
@@ -410,39 +424,29 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                 onPress={() => date && handleDayPress(date, i)}
                 {...calendarCellAccessibilityPropsForMonthView}
               >
-                <React.Fragment>
-                  <View>{renderDateCell(date, i)}</View>
-                  {
-                    //Calendar body will re-render after calendarWidth/calendarCellHeight is set from layout event, prevent expensive operation during first render
-                    calendarWidth > 0 &&
-                      (!disableMonthEventCellPress || calendarCellHeight > 0) &&
-                      date && (
-                        <MemoizedDayEvents
-                          date={date}
-                          sortedEvents={sortedEvents}
-                          maxVisibleEventCount={maxVisibleEventCount}
-                          dayOfTheWeek={ii}
-                          calendarWidth={calendarWidth}
-                          eventMinHeightForMonthView={
-                            eventMinHeightForMonthView
-                          }
-                          showAdjacentMonths={showAdjacentMonths}
-                          moreLabel={moreLabel}
-                          onPressMoreLabel={onPressMoreLabel}
-                          onPressEvent={onPressEvent}
-                          renderEvent={renderEvent}
-                          eventCellStyle={eventCellStyle}
-                          eventCellAccessibilityProps={
-                            eventCellAccessibilityProps
-                          }
-                        />
-                      )
-                  }
-                </React.Fragment>
+                {renderDateCell(date, i, !!isCellSelected)}
                 {isCellSelected ? (
                   <View style={styles.collapseContainer}>
                     <Text style={styles.collapseText}>收起</Text>
                   </View>
+                ) : calendarWidth > 0 &&
+                  (!disableMonthEventCellPress || calendarCellHeight > 0) &&
+                  date ? (
+                  <MemoizedDayEvents
+                    date={date}
+                    sortedEvents={sortedEvents}
+                    maxVisibleEventCount={maxVisibleEventCount}
+                    dayOfTheWeek={ii}
+                    calendarWidth={calendarWidth}
+                    eventMinHeightForMonthView={eventMinHeightForMonthView}
+                    showAdjacentMonths={showAdjacentMonths}
+                    moreLabel={moreLabel}
+                    onPressMoreLabel={onPressMoreLabel}
+                    onPressEvent={onPressEvent}
+                    renderEvent={renderEvent}
+                    eventCellStyle={eventCellStyle}
+                    eventCellAccessibilityProps={eventCellAccessibilityProps}
+                  />
                 ) : null}
               </TouchableOpacity>
             );
