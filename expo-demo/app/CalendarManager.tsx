@@ -73,14 +73,17 @@ type ViewMode = "day" | "3days" | "month" | "schedule";
 export default function CalendarManager() {
   const { height, width } = useWindowDimensions();
   const [viewMode, setViewMode] = useState<ViewMode>("month");
+
+  // 为不同的视图维护独立的页面索引
+  const [monthPageIndex, setMonthPageIndex] = useState(6);
+  const [daysPageIndex, setDaysPageIndex] = useState(100);
+  
+  // 跟踪已渲染的视图
+  const [renderedModes, setRenderedModes] = useState<ViewMode[]>(['month']);
+
   const [menuVisible, setMenuVisible] = useState(false);
   const [baseDate] = useState(dayjs());
   // 根据默认视图模式设置正确的初始页面索引
-  const [currentPageIndex, setCurrentPageIndex] = useState(() => {
-    // 月视图初始页面是6，日/3日视图初始页面是100
-    return 6; // 默认是月视图
-  });
-  // 添加currentDate状态来跟踪当前实际显示的日期
   const [currentDate, setCurrentDate] = useState(() => {
     // 根据默认视图模式计算初始日期
     return dayjs(); // 月视图显示当前月
@@ -95,6 +98,13 @@ export default function CalendarManager() {
     );
     console.log("React Native Version:", Platform.constants.reactNativeVersion);
   }, []);
+
+  const currentPageIndex = useMemo(() => {
+    if (viewMode === 'month') {
+      return monthPageIndex;
+    }
+    return daysPageIndex; // day, 3days
+  }, [viewMode, monthPageIndex, daysPageIndex]);
 
   // 根据当前视图模式和页面索引计算实际显示的日期
   const calculateCurrentDate = (mode: ViewMode, pageIndex: number): Dayjs => {
@@ -139,11 +149,6 @@ export default function CalendarManager() {
     // day 和 3days 模式 - 显示当前日期所在的月份
     return displayMonth;
   }, [viewMode, currentDate]);
-
-  const onPageSelected = (event: any) => {
-    const position = event.nativeEvent.position;
-    setCurrentPageIndex(position);
-  };
 
   // 根据目标日期和视图模式计算应该跳转到的页面索引
   const calculatePageIndexForDate = (targetDate: Dayjs, mode: ViewMode): number => {
@@ -224,6 +229,11 @@ export default function CalendarManager() {
       targetDate = currentDate;
     }
 
+    // Lazily render components
+    if (!renderedModes.includes(mode)) {
+      setRenderedModes([...renderedModes, mode]);
+    }
+
     setViewMode(mode);
     setMenuVisible(false);
 
@@ -232,7 +242,12 @@ export default function CalendarManager() {
       const newPageIndex = calculatePageIndexForDate(targetDate, mode);
       console.log('[CalendarManager] Switching to', mode, 'with targetDate:', targetDate.format('YYYY-MM-DD'), 'pageIndex:', newPageIndex);
       
-      setCurrentPageIndex(newPageIndex);
+      if (mode === 'month') {
+        setMonthPageIndex(newPageIndex);
+      } else {
+        setDaysPageIndex(newPageIndex);
+      }
+
       setCurrentDate(targetDate);
     } else {
       setCurrentDate(targetDate);
@@ -283,8 +298,8 @@ export default function CalendarManager() {
   );
 
   const renderCalendar = () => {
-    if (viewMode === "schedule") {
-      return (
+    const scheduleView = renderedModes.includes('schedule') ? (
+      <View style={[{ flex: 1 }, viewMode !== 'schedule' && { display: 'none' }]}>
         <Schedule
           events={allEvents}
           style={{ flex: 1 }}
@@ -297,30 +312,40 @@ export default function CalendarManager() {
           dateRange={[dayjs().subtract(1, "week"), dayjs().add(1, "week")]}
           scrollOffsetMinutes={0}
         />
-      );
-    }
+      </View>
+    ) : null;
 
-    if (viewMode === "month") {
-      return (
+    const monthView = renderedModes.includes('month') ? (
+      <View style={[{ flex: 1 }, viewMode !== 'month' && { display: 'none' }]}>
         <MonthCalendarPager
           baseDate={baseDate}
           allEvents={allEvents}
-          currentPageIndex={currentPageIndex}
-          setCurrentPageIndex={setCurrentPageIndex}
+          currentPageIndex={monthPageIndex}
+          setCurrentPageIndex={setMonthPageIndex}
           pagerRef={pagerRef}
         />
-      );
-    }
+      </View>
+    ) : null;
+    
+    const daysView = (renderedModes.includes('day') || renderedModes.includes('3days')) ? (
+      <View style={[{ flex: 1 }, viewMode !== 'day' && viewMode !== '3days' && { display: 'none' }]}>
+        <DaysCalendarPager
+          baseDate={baseDate}
+          allEvents={allEvents}
+          currentPageIndex={daysPageIndex}
+          setCurrentPageIndex={setDaysPageIndex}
+          pagerRef={pagerRef}
+          viewMode={viewMode as "day" | "3days"}
+        />
+      </View>
+    ) : null;
 
     return (
-      <DaysCalendarPager
-        baseDate={baseDate}
-        allEvents={allEvents}
-        currentPageIndex={currentPageIndex}
-        setCurrentPageIndex={setCurrentPageIndex}
-        pagerRef={pagerRef}
-        viewMode={viewMode as "day" | "3days"}
-      />
+      <View style={{ flex: 1 }}>
+        {scheduleView}
+        {monthView}
+        {daysView}
+      </View>
     );
   };
 
