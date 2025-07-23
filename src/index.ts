@@ -12,7 +12,6 @@ export { default as dayjs } from "dayjs";
 export * from "./commonStyles";
 export * from "./components/CalendarBody";
 export * from "./components/CalendarEvent";
-export * from "./components/CalendarEventForMonthView";
 export * from "./components/CalendarHeader";
 export * from "./components/CalendarHeaderForMonthView";
 export * from "./components/DefaultCalendarEventRenderer";
