@@ -62,7 +62,6 @@ interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
   sortedMonthView: boolean;
   showWeekNumber?: boolean;
   renderCustomDateForMonth?: (date: Date) => React.ReactElement | null;
-  disableMonthEventCellPress?: boolean;
   onExpandedStateChange?: (isExpanded: boolean) => void;
   calendarWidth: number;
   calendarBodyHeight: number;
@@ -90,7 +89,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   sortedMonthView,
   showWeekNumber = false,
   renderCustomDateForMonth,
-  disableMonthEventCellPress,
   onExpandedStateChange,
   calendarWidth,
   calendarBodyHeight,
@@ -369,7 +367,10 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
 
     return (
       <View
-        style={[styles.dateContainer, isSelected && styles.selectedDateContainer]}
+        style={[
+          styles.dateContainer,
+          isSelected && styles.selectedDateContainer,
+        ]}
       >
         {text}
       </View>
@@ -429,9 +430,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   <View style={styles.collapseContainer}>
                     <Text style={styles.collapseText}>收起</Text>
                   </View>
-                ) : calendarWidth > 0 &&
-                  (!disableMonthEventCellPress || calendarCellHeight > 0) &&
-                  date ? (
+                ) : calendarWidth > 0 && calendarCellHeight > 0 && date ? (
                   <MemoizedDayEvents
                     date={date}
                     sortedEvents={sortedEvents}
