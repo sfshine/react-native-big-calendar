@@ -105,30 +105,22 @@ function _CalendarBody<T extends ICalendarEventBase>({
   timeslots = 0,
   hourComponent,
 }: CalendarBodyProps<T>) {
-  console.log("CalendarBody: Render start");
-  const renderStartTime = performance.now();
-
   const scrollView = React.useRef<ScrollView>(null);
   const { now } = useNow(!hideNowIndicator);
-  const hours = React.useMemo(() => {
-    console.log("CalendarBody: Recalculating hours");
-    return Array.from({ length: maxHour - minHour + 1 }, (_, i) => minHour + i);
-  }, [maxHour, minHour]);
+  const hours = React.useMemo(
+    () => Array.from({ length: maxHour - minHour + 1 }, (_, i) => minHour + i),
+    [maxHour, minHour]
+  );
 
   React.useEffect(() => {
-    console.log("CalendarBody: useEffect for scrollOffsetMinutes triggered");
     let timeout: NodeJS.Timeout;
     if (scrollView.current && scrollOffsetMinutes && Platform.OS !== "ios") {
       // We add delay here to work correct on React Native
       // see: https://stackoverflow.com/questions/33208477/react-native-android-scrollview-scrollto-not-working
+      console.time("CalendarBody: scrolling to initial offset");
       timeout = setTimeout(
         () => {
           if (scrollView?.current) {
-            console.log(
-              `CalendarBody: Scrolling to y: ${
-                (cellHeight * scrollOffsetMinutes) / 60
-              }`
-            );
             scrollView.current.scrollTo({
               y: (cellHeight * scrollOffsetMinutes) / 60,
               animated: false,
@@ -137,6 +129,7 @@ function _CalendarBody<T extends ICalendarEventBase>({
         },
         Platform.OS === "web" ? 0 : 10
       );
+      console.timeEnd("CalendarBody: scrolling to initial offset");
     }
     return () => {
       if (timeout) {
@@ -147,7 +140,6 @@ function _CalendarBody<T extends ICalendarEventBase>({
 
   const _onPressCell = React.useCallback(
     (date: dayjs.Dayjs) => {
-      console.log("CalendarBody: _onPressCell called for date:", date.toDate());
       onPressCell?.(date.toDate());
     },
     [onPressCell]
@@ -155,47 +147,33 @@ function _CalendarBody<T extends ICalendarEventBase>({
 
   const _onLongPressCell = React.useCallback(
     (date: dayjs.Dayjs) => {
-      console.log(
-        "CalendarBody: _onLongPressCell called for date:",
-        date.toDate()
-      );
       onLongPressCell?.(date.toDate());
     },
     [onLongPressCell]
   );
 
   const enrichedEvents = React.useMemo(() => {
-    console.log("CalendarBody: Recalculating enrichedEvents");
-    const enrichedEventsStartTime = performance.now();
+    console.time("CalendarBody: calculating enrichedEvents");
+    let result;
     if (isEventOrderingEnabled) {
       // Events are being sorted once so we dont have to do it on each loop
       const sortedEvents = [...events].sort((a, b) =>
         dayjs(a.start).diff(dayjs(b.start))
       );
-      const result = sortedEvents.map((event) => ({
+      result = sortedEvents.map((event) => ({
         ...event,
         overlapPosition: getOrderOfEvent(event, sortedEvents),
         overlapCount: getCountOfEventsAtEvent(event, sortedEvents),
       }));
-      console.log(
-        `CalendarBody: enrichedEvents calculation took ${
-          performance.now() - enrichedEventsStartTime
-        } ms`
-      );
-      return result;
+    } else {
+      result = events;
     }
-
-    console.log(
-      `CalendarBody: enrichedEvents calculation took ${
-        performance.now() - enrichedEventsStartTime
-      } ms`
-    );
-    return events;
+    console.timeEnd("CalendarBody: calculating enrichedEvents");
+    return result;
   }, [events, isEventOrderingEnabled]);
 
   const eventsByDateMap = React.useMemo(() => {
-    console.log("CalendarBody: Recalculating eventsByDateMap");
-    const eventsByDateMapStartTime = performance.now();
+    console.time("CalendarBody: calculating eventsByDateMap");
     const map: Record<string, T[]> = {};
     enrichedEvents.forEach((event) => {
       const startDate = dayjs(event.start).format(SIMPLE_DATE_FORMAT);
@@ -240,20 +218,12 @@ function _CalendarBody<T extends ICalendarEventBase>({
         }
       }
     });
-    console.log(
-      `CalendarBody: eventsByDateMap calculation took ${
-        performance.now() - eventsByDateMapStartTime
-      } ms`
-    );
+    console.timeEnd("CalendarBody: calculating eventsByDateMap");
     return map;
   }, [enrichedEvents]);
 
   const _renderMappedEvent = React.useCallback(
     (event: T, index: number) => {
-      console.log(
-        "CalendarBody: _renderMappedEvent called for event:",
-        event.title
-      );
       return (
         <CalendarEvent
           key={`${index}${event.start}${event.title}${event.end}`}
@@ -291,18 +261,26 @@ function _CalendarBody<T extends ICalendarEventBase>({
 
   const _renderEvents = React.useCallback(
     (date: dayjs.Dayjs) => {
-      console.log(
-        "CalendarBody: _renderEvents called for date:",
-        date.format(SIMPLE_DATE_FORMAT)
-      );
-      return (eventsByDateMap[date.format(SIMPLE_DATE_FORMAT)] || []).map(
-        _renderMappedEvent
-      );
+      const dateStr = date.format(SIMPLE_DATE_FORMAT);
+      const eventsForDate = eventsByDateMap[dateStr] || [];
+      return eventsForDate.map(_renderMappedEvent);
     },
     [_renderMappedEvent, eventsByDateMap]
   );
 
   const theme = useTheme();
+
+  const dayLabel = dateRange.map((d) => d.toString()).join("-");
+  const memoizedEvents = React.useMemo(() => {
+    console.time("CalendarBody: memoizing events");
+    const result = dateRange.map((date) => (
+      <React.Fragment key={"events-" + date.toString()}>
+        {_renderEvents(date)}
+      </React.Fragment>
+    ));
+    console.timeEnd("CalendarBody: memoizing events");
+    return result;
+  }, [_renderEvents, dayLabel]);
 
   return (
     <React.Fragment>
@@ -377,7 +355,7 @@ function _CalendarBody<T extends ICalendarEventBase>({
                     />
                   );
                 })}
-                {_renderEvents(date)}
+                {memoizedEvents}
                 {isToday(date) && !hideNowIndicator && (
                   <View
                     style={[

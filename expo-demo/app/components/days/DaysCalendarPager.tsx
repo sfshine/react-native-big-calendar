@@ -48,53 +48,62 @@ export default memo(function DaysCalendarPager({
   }, []);
 
   const { pageCount, initialPage } = useMemo(() => {
-    if (viewMode === 'day') {
-      const totalDays = maxDate.diff(minDate, 'day') + 1;
-      const initialPage = dayjs().diff(minDate, 'day');
+    console.time("DaysCalendarPager: calculating pageCount and initialPage");
+    if (viewMode === "day") {
+      const totalDays = maxDate.diff(minDate, "day") + 1;
+      const initialPage = dayjs().diff(minDate, "day");
+      console.timeEnd(
+        "DaysCalendarPager: calculating pageCount and initialPage"
+      );
       return { pageCount: totalDays, initialPage };
-    } else { // 3days
-      const totalDays = maxDate.diff(minDate, 'day') + 1;
+    } else {
+      // 3days
+      const totalDays = maxDate.diff(minDate, "day") + 1;
       const pageCount = Math.ceil(totalDays / 3);
-      const initialPage = Math.floor(dayjs().diff(minDate, 'day') / 3);
+      const initialPage = Math.floor(dayjs().diff(minDate, "day") / 3);
+      console.timeEnd(
+        "DaysCalendarPager: calculating pageCount and initialPage"
+      );
       return { pageCount, initialPage };
     }
   }, [minDate, maxDate, viewMode]);
 
   const offscreenPageLimit = 1;
 
+  const allDayEvents = useMemo(() => {
+    console.time("DaysCalendarPager: calculating allDayEvents");
+    const result = allEvents.filter((event) => {
+      const start = dayjs(event.start);
+      const end = dayjs(event.end);
+      return (
+        start.hour() === 0 &&
+        start.minute() === 0 &&
+        end.hour() === 23 &&
+        end.minute() === 59
+      );
+    });
+    console.timeEnd("DaysCalendarPager: calculating allDayEvents");
+    return result;
+  }, [allEvents]);
 
-
-  const allDayEvents = useMemo(
-    () =>
-      allEvents.filter((event) => {
-        const start = dayjs(event.start);
-        const end = dayjs(event.end);
-        return (
-          start.hour() === 0 &&
-          start.minute() === 0 &&
-          end.hour() === 23 &&
-          end.minute() === 59
-        );
-      }),
-    [allEvents]
-  );
-
-  const daytimeEvents = useMemo(
-    () =>
-      allEvents.filter((event) => {
-        const start = dayjs(event.start);
-        const end = dayjs(event.end);
-        return !(
-          start.hour() === 0 &&
-          start.minute() === 0 &&
-          end.hour() === 23 &&
-          end.minute() === 59
-        );
-      }),
-    [allEvents]
-  );
+  const daytimeEvents = useMemo(() => {
+    console.time("DaysCalendarPager: calculating daytimeEvents");
+    const result = allEvents.filter((event) => {
+      const start = dayjs(event.start);
+      const end = dayjs(event.end);
+      return !(
+        start.hour() === 0 &&
+        start.minute() === 0 &&
+        end.hour() === 23 &&
+        end.minute() === 59
+      );
+    });
+    console.timeEnd("DaysCalendarPager: calculating daytimeEvents");
+    return result;
+  }, [allEvents]);
 
   const pages = useMemo(() => {
+    console.time("DaysCalendarPager: calculating pages");
     const pagesArray = Array.from({ length: pageCount }, (_, index) => {
       let pageDate: Dayjs;
       if (viewMode === "day") {
@@ -107,17 +116,83 @@ export default memo(function DaysCalendarPager({
         viewMode === "day"
           ? getDatesInNextOneDay(pageDate.toDate())
           : getDatesInNextThreeDaysFixed(pageDate.toDate());
-      
-      // 调试当前页面
-      if (index === currentPageIndex) {
-        console.log('[DaysCalendarPager] Displaying page:', index, 'date:', pageDate.format('YYYY-MM-DD'));
-      }
-      
+
       return { key: index, date: pageDate, dateRange };
     });
-    
+    console.timeEnd("DaysCalendarPager: calculating pages");
     return pagesArray;
-  }, [minDate, pageCount, viewMode, currentPageIndex]);
+  }, [minDate, pageCount, viewMode]);
+
+  const placeholderPages = useMemo(() => {
+    console.time("DaysCalendarPager: creating placeholder pages");
+    const result = Array.from({ length: pageCount }).map((_, index) => (
+      <View key={index} style={styles.pageContainer} />
+    ));
+    console.timeEnd("DaysCalendarPager: creating placeholder pages");
+    return result;
+  }, [pageCount]);
+
+  const cellHeight = 60;
+  const containerHeight = height - 220;
+  const scrollOffsetMinutes = 480; // 8:00 AM
+
+  const pagesToRender = useMemo(() => {
+    console.time(
+      `DaysCalendarPager: creating pages to render for index ${currentPageIndex}`
+    );
+    const newPages = [...placeholderPages];
+    const start = Math.max(0, currentPageIndex - offscreenPageLimit);
+    const end = Math.min(pageCount - 1, currentPageIndex + offscreenPageLimit);
+
+    for (let i = start; i <= end; i++) {
+      const page = pages[i];
+      if (!page) continue;
+
+      const dateRange: Dayjs[] = page.dateRange;
+      newPages[i] = (
+        <View key={page.key} style={styles.pageContainer}>
+          <CalendarHeader
+            dateRange={dateRange}
+            cellHeight={cellHeight}
+            locale="en"
+            style={styles.headerComponent}
+            allDayEvents={allDayEvents}
+            showAllDayEventCell={true}
+            allDayEventCellStyle={{}}
+            allDayEventCellTextColor=""
+          />
+          <CalendarBody
+            cellHeight={cellHeight}
+            containerHeight={containerHeight}
+            dateRange={dateRange}
+            events={daytimeEvents}
+            scrollOffsetMinutes={scrollOffsetMinutes}
+            ampm={false}
+            showTime={true}
+            style={styles.calendarBody}
+            hideNowIndicator={false}
+            overlapOffset={20}
+            isEventOrderingEnabled={true}
+          />
+        </View>
+      );
+    }
+    console.timeEnd(
+      `DaysCalendarPager: creating pages to render for index ${currentPageIndex}`
+    );
+    return newPages;
+  }, [
+    placeholderPages,
+    pages,
+    currentPageIndex,
+    offscreenPageLimit,
+    pageCount,
+    cellHeight,
+    containerHeight,
+    allDayEvents,
+    daytimeEvents,
+    scrollOffsetMinutes,
+  ]);
 
   const offset =
     viewMode === "day"
@@ -127,14 +202,10 @@ export default memo(function DaysCalendarPager({
   const endDate =
     viewMode === "day" ? currentDisplayDate : currentDisplayDate.add(2, "day");
 
-  const cellHeight = 60;
-  const containerHeight = height - 220;
-  const scrollOffsetMinutes = 480; // 8:00 AM
-
   const onPageSelected = (event: any) => {
     if (isMounted.current) {
       const position = event.nativeEvent.position;
-      console.log(`[DaysCalendarPager] onPageSelected: position=${position}`);
+      console.log(`DaysCalendarPager: onPageSelected - position: ${position}`);
       setCurrentPageIndex(position);
     }
   };
@@ -146,43 +217,7 @@ export default memo(function DaysCalendarPager({
       initialPage={currentPageIndex}
       onPageSelected={onPageSelected}
     >
-      {pages.map((page, index) => {
-        const dateRange: Dayjs[] = page.dateRange;
-        const isPageCached =
-          Math.abs(index - currentPageIndex) <= offscreenPageLimit;
-
-        if (!isPageCached) {
-          return <View key={page.key} style={styles.pageContainer} />;
-        }
-
-        return (
-          <View key={page.key} style={styles.pageContainer}>
-            <CalendarHeader
-              dateRange={dateRange}
-              cellHeight={cellHeight}
-              locale="en"
-              style={styles.headerComponent}
-              allDayEvents={allDayEvents}
-              showAllDayEventCell={true}
-              allDayEventCellStyle={{}}
-              allDayEventCellTextColor=""
-            />
-            <CalendarBody
-              cellHeight={cellHeight}
-              containerHeight={containerHeight}
-              dateRange={dateRange}
-              events={daytimeEvents}
-              scrollOffsetMinutes={scrollOffsetMinutes}
-              ampm={false}
-              showTime={true}
-              style={styles.calendarBody}
-              hideNowIndicator={false}
-              overlapOffset={20}
-              isEventOrderingEnabled={true}
-            />
-          </View>
-        );
-      })}
+      {pagesToRender}
     </PagerView>
   );
 });
