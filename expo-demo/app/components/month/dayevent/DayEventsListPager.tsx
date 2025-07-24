@@ -1,9 +1,11 @@
 import * as React from "react";
-import { FlatList, Text, View, type ViewStyle } from "react-native";
-import PagerView, {
-  type PagerViewOnPageSelectedEvent,
-  type PageScrollStateChangedNativeEvent,
-} from "react-native-pager-view";
+import {
+  FlatList,
+  Text,
+  View,
+  type ViewStyle,
+  useWindowDimensions,
+} from "react-native";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import { ICalendarEventBase } from "react-native-big-calendar";
@@ -28,8 +30,16 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   onDateChange,
   style,
 }: DayEventsListPagerProps<T>) {
-  const pagerRef = React.useRef<PagerView>(null);
-  const isUserDragging = React.useRef(false);
+  const { width } = useWindowDimensions();
+  const flatListRef = React.useRef<FlatList>(null);
+  const isMounted = React.useRef(false);
+
+  React.useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const selectedIndex = React.useMemo(
     () => weekDates.findIndex((date) => date.isSame(selectedDate, "day")),
@@ -37,8 +47,6 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   );
 
   const initialPage = selectedIndex > -1 ? selectedIndex : 0;
-  const [activePage, setActivePage] = React.useState(initialPage);
-  const currentPage = React.useRef(initialPage);
 
   const eventsByDate = React.useMemo(() => {
     const grouped = new Map<string, T[]>();
@@ -57,53 +65,35 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
   }, [events, weekDates]);
 
   React.useEffect(() => {
-    // Sync active page with selected date from props
-    if (selectedIndex > -1) {
-      setActivePage(selectedIndex);
-    }
-  }, [selectedIndex]);
-
-  React.useEffect(() => {
     if (
       selectedIndex >= 0 &&
-      selectedIndex !== currentPage.current &&
-      pagerRef.current
+      flatListRef.current
     ) {
-      // No flag needed here, we detect user scrolls via the 'dragging' state
-      pagerRef.current.setPage(selectedIndex);
+      flatListRef.current.scrollToIndex({
+        index: selectedIndex,
+        animated: false,
+      });
     }
   }, [selectedIndex]);
 
-  const handlePageScrollStateChanged = (
-    e: PageScrollStateChangedNativeEvent,
-  ) => {
-    const { pageScrollState } = e.nativeEvent;
-
-    if (pageScrollState === "dragging") {
-      isUserDragging.current = true;
-    } else if (pageScrollState === "idle") {
-      isUserDragging.current = false;
+  const onMomentumScrollEnd = (event: any) => {
+    if (isMounted.current) {
+      const newIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+      if (
+        newIndex >= 0 &&
+        newIndex < weekDates.length &&
+        !weekDates[newIndex].isSame(selectedDate)
+      ) {
+        onDateChange?.(weekDates[newIndex]);
+      }
     }
   };
 
-  const handlePageSelected = (e: PagerViewOnPageSelectedEvent) => {
-    const newIndex = e.nativeEvent.position;
-    currentPage.current = newIndex;
-    setActivePage(newIndex);
-
-    // Only fire the change if it was initiated by the user dragging the pager.
-    if (!isUserDragging.current) {
-      return;
-    }
-
-    if (
-      newIndex >= 0 &&
-      newIndex < weekDates.length &&
-      !weekDates[newIndex].isSame(selectedDate)
-    ) {
-      onDateChange?.(weekDates[newIndex]);
-    }
-  };
+  const getItemLayout = (_: any, index: number) => ({
+    length: width,
+    offset: width * index,
+    index,
+  });
 
   const renderDayEvents = React.useCallback(
     (date: dayjs.Dayjs) => {
@@ -140,25 +130,33 @@ export function DayEventsListPager<T extends ICalendarEventBase>({
     [eventsByDate],
   );
 
+  const renderItem = ({
+    item: date,
+  }: {
+    item: dayjs.Dayjs;
+    index: number;
+  }) => {
+    return <View style={{ width: width }}>{renderDayEvents(date)}</View>;
+  };
+
   return (
     <View style={[style, { backgroundColor: "green" }]}>
-      <PagerView
-        ref={pagerRef}
+      <FlatList
+        ref={flatListRef}
         style={{ flex: 1 }}
-        initialPage={initialPage}
-        onPageSelected={handlePageSelected}
-        onPageScrollStateChanged={handlePageScrollStateChanged}
-        key={weekDates.map((d) => d.format("YYYY-MM-DD")).join("-")}
-      >
-        {weekDates.map((date, index) => {
-          const isPageActive = Math.abs(activePage - index) <= 1;
-          return (
-            <View key={date.format("YYYY-MM-DD")} style={{ flex: 1 }}>
-              {isPageActive ? renderDayEvents(date) : <View />}
-            </View>
-          );
-        })}
-      </PagerView>
+        data={weekDates}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.format("YYYY-MM-DD")}
+        horizontal
+        pagingEnabled
+        initialScrollIndex={initialPage}
+        onMomentumScrollEnd={onMomentumScrollEnd}
+        getItemLayout={getItemLayout}
+        showsHorizontalScrollIndicator={false}
+        windowSize={3}
+        initialNumToRender={1}
+        maxToRenderPerBatch={3}
+      />
     </View>
   );
 }
