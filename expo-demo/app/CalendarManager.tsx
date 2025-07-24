@@ -1,32 +1,30 @@
 import { Ionicons } from "@expo/vector-icons";
 import dayjs, { Dayjs } from "dayjs";
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Modal,
+  Platform,
   SafeAreaView,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
-  Platform,
 } from "react-native";
-import PagerView from "react-native-pager-view";
-
-declare global {
-  var nativeFabricUIManager: any;
-}
 import {
   defaultTheme,
   ICalendarEventBase,
   Schedule,
   ThemeContext,
 } from "react-native-big-calendar";
-import { events as eventList } from "../events";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { events as eventList } from "../events";
 import { BWTouchableOpacity } from "./BWTouchableOpacity";
-import MonthCalendarPager from "./components/month/MonthCalendarPager";
 import DaysCalendarPager from "./components/days/DaysCalendarPager";
-import { fail } from "node:assert";
+import MonthCalendarPager from "./components/month/MonthCalendarPager";
+
+declare global {
+  var nativeFabricUIManager: any;
+}
 
 // Dummy events, can be shared
 const DUMMY_EVENTS: ICalendarEventBase[] = [
@@ -335,7 +333,7 @@ export default function CalendarManager() {
             key={viewMode}
             allEvents={allEvents}
             currentPageIndex={daysPageIndex}
-            setCurrentPageIndex={setDaysPageIndex}
+            setCurrentPageIndex={(setDaysPageIndex)}
             viewMode={viewMode as "day" | "3days"}
             minDate={minDate}
             maxDate={maxDate}
