@@ -1,17 +1,12 @@
 import dayjs, { Dayjs } from "dayjs";
-import React, { useRef, useState, useMemo, memo, useEffect } from "react";
-import {
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-  FlatList,
-} from "react-native";
+import React, { useMemo } from "react";
+import { StyleSheet, useWindowDimensions, View, Text } from "react-native";
 import {
   CalendarHeader,
   ICalendarEventBase,
 } from "react-native-big-calendar";
 import { CalendarBody } from "./CalendarBody";
+import PagerView from "../common/PagerView";
 
 type ViewMode = "day" | "3days";
 
@@ -33,7 +28,7 @@ const getDatesInNextThreeDaysFixed = (date: Date): Dayjs[] => {
   return [day, day.add(1, "day"), day.add(2, "day")];
 };
 
-export default memo(function DaysCalendarPager({
+export default React.memo(function DaysCalendarPager({
   allEvents,
   currentPageIndex,
   setCurrentPageIndex,
@@ -43,26 +38,8 @@ export default memo(function DaysCalendarPager({
 }: DaysCalendarPagerProps) {
   const { height, width } = useWindowDimensions();
   const calendarBodyHeight = height - 120; // Adjust as needed
-  const isMounted = useRef(true);
-  const flatListRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (flatListRef.current) {
-      flatListRef.current.scrollToIndex({
-        index: currentPageIndex,
-        animated: false,
-      });
-    }
-  }, [currentPageIndex, viewMode]);
-
-  const { pageCount, initialPage } = useMemo(() => {
+  const { pageCount } = useMemo(() => {
     console.time("DaysCalendarPager: calculating pageCount and initialPage");
     if (viewMode === "day") {
       const totalDays = maxDate.diff(minDate, "day") + 1;
@@ -82,8 +59,6 @@ export default memo(function DaysCalendarPager({
       return { pageCount, initialPage };
     }
   }, [minDate, maxDate, viewMode]);
-
-  const offscreenPageLimit = 1;
 
   const allDayEvents = useMemo(() => {
     console.time("DaysCalendarPager: calculating allDayEvents");
@@ -142,25 +117,13 @@ export default memo(function DaysCalendarPager({
   const containerHeight = height - 220;
   const scrollOffsetMinutes = 480; // 8:00 AM
 
-  const onMomentumScrollEnd = (event: any) => {
-    if (isMounted.current) {
-      const newIndex = Math.round(event.nativeEvent.contentOffset.x / width);
-      console.log(
-        `DaysCalendarPager: onMomentumScrollEnd - newIndex: ${newIndex}`
-      );
-      if (newIndex !== currentPageIndex) {
-        setCurrentPageIndex(newIndex);
-      }
+  const onPageChanged = (newIndex: number) => {
+    if (newIndex !== currentPageIndex) {
+      setCurrentPageIndex(newIndex);
     }
   };
 
-  const getItemLayout = (_: any, index: number) => ({
-    length: width,
-    offset: width * index,
-    index,
-  });
-
-  const renderItem = ({
+  const renderPage = ({
     item: page,
     index,
   }: {
@@ -207,20 +170,13 @@ export default memo(function DaysCalendarPager({
   };
 
   return (
-    <FlatList
-      ref={flatListRef}
+    <PagerView
       style={[styles.pagerView, { height: calendarBodyHeight }]}
       data={pages}
-      renderItem={renderItem}
+      renderPage={renderPage}
       keyExtractor={(item) => item.key.toString()}
-      horizontal
-      pagingEnabled
-      initialScrollIndex={currentPageIndex}
-      onMomentumScrollEnd={onMomentumScrollEnd}
-      getItemLayout={getItemLayout}
-      windowSize={3}
-      initialNumToRender={1}
-      maxToRenderPerBatch={3}
+      initialPageIndex={currentPageIndex}
+      onPageChanged={onPageChanged}
     />
   );
 });
