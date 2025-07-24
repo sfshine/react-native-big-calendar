@@ -1,12 +1,17 @@
 import dayjs, { Dayjs } from "dayjs";
 import React, { useRef, useState, useMemo, memo, useEffect } from "react";
-import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+  FlatList,
+} from "react-native";
 import {
   CalendarHeader,
   ICalendarEventBase,
 } from "react-native-big-calendar";
 import { CalendarBody } from "./CalendarBody";
-import PagerView from "react-native-pager-view";
 
 type ViewMode = "day" | "3days";
 
@@ -36,9 +41,10 @@ export default memo(function DaysCalendarPager({
   minDate,
   maxDate,
 }: DaysCalendarPagerProps) {
-  const { height } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
   const calendarBodyHeight = height - 120; // Adjust as needed
   const isMounted = useRef(true);
+  const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     isMounted.current = true;
@@ -46,6 +52,15 @@ export default memo(function DaysCalendarPager({
       isMounted.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToIndex({
+        index: currentPageIndex,
+        animated: false,
+      });
+    }
+  }, [currentPageIndex, viewMode]);
 
   const { pageCount, initialPage } = useMemo(() => {
     console.time("DaysCalendarPager: calculating pageCount and initialPage");
@@ -123,102 +138,90 @@ export default memo(function DaysCalendarPager({
     return pagesArray;
   }, [minDate, pageCount, viewMode]);
 
-  const placeholderPages = useMemo(() => {
-    console.time("DaysCalendarPager: creating placeholder pages");
-    const result = Array.from({ length: pageCount }).map((_, index) => (
-      <View key={index} style={styles.pageContainer} />
-    ));
-    console.timeEnd("DaysCalendarPager: creating placeholder pages");
-    return result;
-  }, [pageCount]);
-
   const cellHeight = 60;
   const containerHeight = height - 220;
   const scrollOffsetMinutes = 480; // 8:00 AM
 
-  const pagesToRender = useMemo(() => {
-    console.time(
-      `DaysCalendarPager: creating pages to render for index ${currentPageIndex}`
-    );
-    const newPages = [...placeholderPages];
-    const start = Math.max(0, currentPageIndex - offscreenPageLimit);
-    const end = Math.min(pageCount - 1, currentPageIndex + offscreenPageLimit);
-
-    for (let i = start; i <= end; i++) {
-      const page = pages[i];
-      if (!page) continue;
-
-      const dateRange: Dayjs[] = page.dateRange;
-      newPages[i] = (
-        <View key={page.key} style={styles.pageContainer}>
-          <CalendarHeader
-            dateRange={dateRange}
-            cellHeight={cellHeight}
-            locale="en"
-            style={styles.headerComponent}
-            allDayEvents={allDayEvents}
-            showAllDayEventCell={true}
-            allDayEventCellStyle={{}}
-            allDayEventCellTextColor=""
-          />
-          <CalendarBody
-            cellHeight={cellHeight}
-            containerHeight={containerHeight}
-            dateRange={dateRange}
-            events={daytimeEvents}
-            scrollOffsetMinutes={scrollOffsetMinutes}
-            ampm={false}
-            showTime={true}
-            style={styles.calendarBody}
-            hideNowIndicator={false}
-            overlapOffset={20}
-            isEventOrderingEnabled={true}
-          />
-        </View>
-      );
-    }
-    console.timeEnd(
-      `DaysCalendarPager: creating pages to render for index ${currentPageIndex}`
-    );
-    return newPages;
-  }, [
-    placeholderPages,
-    pages,
-    currentPageIndex,
-    offscreenPageLimit,
-    pageCount,
-    cellHeight,
-    containerHeight,
-    allDayEvents,
-    daytimeEvents,
-    scrollOffsetMinutes,
-  ]);
-
-  const offset =
-    viewMode === "day"
-      ? currentPageIndex
-      : currentPageIndex * 3;
-  const currentDisplayDate = minDate.add(offset, "day");
-  const endDate =
-    viewMode === "day" ? currentDisplayDate : currentDisplayDate.add(2, "day");
-
-  const onPageSelected = (event: any) => {
+  const onMomentumScrollEnd = (event: any) => {
     if (isMounted.current) {
-      const position = event.nativeEvent.position;
-      console.log(`DaysCalendarPager: onPageSelected - position: ${position}`);
-      setCurrentPageIndex(position);
+      const newIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+      console.log(
+        `DaysCalendarPager: onMomentumScrollEnd - newIndex: ${newIndex}`
+      );
+      if (newIndex !== currentPageIndex) {
+        setCurrentPageIndex(newIndex);
+      }
     }
   };
 
+  const getItemLayout = (_: any, index: number) => ({
+    length: width,
+    offset: width * index,
+    index,
+  });
+
+  const renderItem = ({
+    item: page,
+    index,
+  }: {
+    item: { key: number; date: Dayjs; dateRange: Dayjs[] };
+    index: number;
+  }) => {
+    console.time(
+      `DaysCalendarPager: creating pages to render for index ${index}`
+    );
+
+    const dateRange: Dayjs[] = page.dateRange;
+    const component = (
+      <View key={page.key} style={[styles.pageContainer, { width: width }]}>
+        <CalendarHeader
+          dateRange={dateRange}
+          cellHeight={cellHeight}
+          locale="en"
+          style={styles.headerComponent}
+          allDayEvents={allDayEvents}
+          showAllDayEventCell={true}
+          allDayEventCellStyle={{}}
+          allDayEventCellTextColor=""
+        />
+        <CalendarBody
+          cellHeight={cellHeight}
+          containerHeight={containerHeight}
+          dateRange={dateRange}
+          events={daytimeEvents}
+          scrollOffsetMinutes={scrollOffsetMinutes}
+          ampm={false}
+          showTime={true}
+          style={styles.calendarBody}
+          hideNowIndicator={false}
+          overlapOffset={20}
+          isEventOrderingEnabled={true}
+        />
+      </View>
+    );
+
+    console.timeEnd(
+      `DaysCalendarPager: creating pages to render for index ${index}`
+    );
+    return component;
+  };
+
   return (
-    <PagerView
-      offscreenPageLimit={offscreenPageLimit}
+    <FlatList
+      ref={flatListRef}
       style={[styles.pagerView, { height: calendarBodyHeight }]}
-      initialPage={currentPageIndex}
-      onPageSelected={onPageSelected}
-    >
-      {pagesToRender}
-    </PagerView>
+      data={pages}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.key.toString()}
+      horizontal
+      pagingEnabled
+      initialScrollIndex={currentPageIndex}
+      onMomentumScrollEnd={onMomentumScrollEnd}
+      getItemLayout={getItemLayout}
+      windowSize={3}
+      initialNumToRender={1}
+      maxToRenderPerBatch={3}
+    />
   );
 });
 
