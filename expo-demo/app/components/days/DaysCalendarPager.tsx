@@ -6,14 +6,12 @@ import {
   ICalendarEventBase,
 } from "react-native-big-calendar";
 import { CalendarBody } from "./CalendarBody";
-import PagerView from "react-native-pager-view";
 
 type ViewMode = "day" | "3days";
 
 interface DaysCalendarPagerProps {
   allEvents: ICalendarEventBase[];
   currentPageIndex: number;
-  setCurrentPageIndex: (index: number) => void;
   viewMode: ViewMode;
   minDate: Dayjs;
   maxDate: Dayjs;
@@ -31,7 +29,6 @@ const getDatesInNextThreeDaysFixed = (date: Date): Dayjs[] => {
 export default memo(function DaysCalendarPager({
   allEvents,
   currentPageIndex,
-  setCurrentPageIndex,
   viewMode,
   minDate,
   maxDate,
@@ -67,8 +64,6 @@ export default memo(function DaysCalendarPager({
       return { pageCount, initialPage };
     }
   }, [minDate, maxDate, viewMode]);
-
-  const offscreenPageLimit = 1;
 
   const allDayEvents = useMemo(() => {
     console.time("DaysCalendarPager: calculating allDayEvents");
@@ -123,36 +118,26 @@ export default memo(function DaysCalendarPager({
     return pagesArray;
   }, [minDate, pageCount, viewMode]);
 
-  const placeholderPages = useMemo(() => {
-    console.time("DaysCalendarPager: creating placeholder pages");
-    const result = Array.from({ length: pageCount }).map((_, index) => (
-      <View key={index} style={styles.pageContainer} />
-    ));
-    console.timeEnd("DaysCalendarPager: creating placeholder pages");
-    return result;
-  }, [pageCount]);
-
   const cellHeight = 60;
   const containerHeight = height - 220;
   const scrollOffsetMinutes = 480; // 8:00 AM
 
-  const pagesToRender = useMemo(() => {
-    console.time(
-      `DaysCalendarPager: creating pages to render for index ${currentPageIndex}`
-    );
-    const newPages = [...placeholderPages];
-    const start = Math.max(0, currentPageIndex - offscreenPageLimit);
-    const end = Math.min(pageCount - 1, currentPageIndex + offscreenPageLimit);
+  const offset =
+    viewMode === "day"
+      ? currentPageIndex
+      : currentPageIndex * 3;
+  const currentDisplayDate = minDate.add(offset, "day");
+  const endDate =
+    viewMode === "day" ? currentDisplayDate : currentDisplayDate.add(2, "day");
 
-    for (let i = start; i <= end; i++) {
-      const page = pages[i];
-      if (!page) continue;
+  const currentPage = pages[currentPageIndex];
 
-      const dateRange: Dayjs[] = page.dateRange;
-      newPages[i] = (
-        <View key={page.key} style={styles.pageContainer}>
+  return (
+    <View style={[styles.pagerView, { height: calendarBodyHeight }]}>
+      {currentPage ? (
+        <View key={currentPage.key} style={styles.pageContainer}>
           <CalendarHeader
-            dateRange={dateRange}
+            dateRange={currentPage.dateRange}
             cellHeight={cellHeight}
             locale="en"
             style={styles.headerComponent}
@@ -164,7 +149,7 @@ export default memo(function DaysCalendarPager({
           <CalendarBody
             cellHeight={cellHeight}
             containerHeight={containerHeight}
-            dateRange={dateRange}
+            dateRange={currentPage.dateRange}
             events={daytimeEvents}
             scrollOffsetMinutes={scrollOffsetMinutes}
             ampm={false}
@@ -175,50 +160,8 @@ export default memo(function DaysCalendarPager({
             isEventOrderingEnabled={true}
           />
         </View>
-      );
-    }
-    console.timeEnd(
-      `DaysCalendarPager: creating pages to render for index ${currentPageIndex}`
-    );
-    return newPages;
-  }, [
-    placeholderPages,
-    pages,
-    currentPageIndex,
-    offscreenPageLimit,
-    pageCount,
-    cellHeight,
-    containerHeight,
-    allDayEvents,
-    daytimeEvents,
-    scrollOffsetMinutes,
-  ]);
-
-  const offset =
-    viewMode === "day"
-      ? currentPageIndex
-      : currentPageIndex * 3;
-  const currentDisplayDate = minDate.add(offset, "day");
-  const endDate =
-    viewMode === "day" ? currentDisplayDate : currentDisplayDate.add(2, "day");
-
-  const onPageSelected = (event: any) => {
-    if (isMounted.current) {
-      const position = event.nativeEvent.position;
-      console.log(`DaysCalendarPager: onPageSelected - position: ${position}`);
-      setCurrentPageIndex(position);
-    }
-  };
-
-  return (
-    <PagerView
-      offscreenPageLimit={offscreenPageLimit}
-      style={[styles.pagerView, { height: calendarBodyHeight }]}
-      initialPage={currentPageIndex}
-      onPageSelected={onPageSelected}
-    >
-      {pagesToRender}
-    </PagerView>
+      ) : null}
+    </View>
   );
 });
 
