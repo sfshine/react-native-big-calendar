@@ -6,6 +6,7 @@ import {
   NativeScrollEvent,
   ViewStyle,
   StyleProp,
+  InteractionManager,
 } from "react-native";
 
 interface PagerViewProps<T> {
@@ -27,38 +28,24 @@ function PagerView<T>({
 }: PagerViewProps<T>) {
   const { width } = useWindowDimensions();
   const flatListRef = useRef<FlatList<T>>(null);
-  const isMounted = useRef(true);
 
   useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (flatListRef.current) {
-      if (isMounted.current) {
-        // setTimeout to ensure the list has been rendered
-        setTimeout(() => {
-          if (isMounted.current) {
-            flatListRef.current?.scrollToIndex({
-              index: initialPageIndex,
-              animated: false,
-            });
-          }
-        }, 100);
+    // Using InteractionManager is more reliable than setTimeout.
+    InteractionManager.runAfterInteractions(() => {
+      if (flatListRef.current) {
+        flatListRef.current.scrollToIndex({
+          index: initialPageIndex,
+          animated: false,
+        });
       }
-    }
+    });
   }, [initialPageIndex]);
 
   const onMomentumScrollEnd = (
     event: NativeSyntheticEvent<NativeScrollEvent>
   ) => {
-    if (isMounted.current) {
-      const newIndex = Math.round(event.nativeEvent.contentOffset.x / width);
-      onPageChanged(newIndex);
-    }
+    const newIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+    onPageChanged(newIndex);
   };
 
   const getItemLayout = (_: any, index: number) => ({
